@@ -15,6 +15,8 @@ class GameHandler:
 
         create_screen()
         shader_handler.post_screen_init()
+        shader_handler.surfs["perlinNoise"] = pygame.image.load("data/imgs/animations/perlin_noise.png").convert_alpha()
+        shader_handler.surf_data["perlinNoise"] = {"repeat":True}
         Animation.load_db()
         sfx.init_custom_music()
 
@@ -82,6 +84,7 @@ class GameHandler:
 
     def run(self):
         self.running = True
+        self.shader_time = 0
 
         while self.running:
             self.handle_input()
@@ -96,10 +99,11 @@ class GameHandler:
             self.handle_transition()
 
             shader_handler.surfs['canvasTex'] = self.canvas
+            shader_handler.vars["time"] = self.shader_time
             shader_handler.render()
             pygame.display.flip()
             shader_handler.release_textures()
-            self.clock.tick(config.fps)
+            self.shader_time += self.clock.tick(config.fps)
 
         pygame.quit()
         sys.exit()

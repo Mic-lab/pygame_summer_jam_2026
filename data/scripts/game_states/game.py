@@ -1,4 +1,5 @@
 import pygame
+import copy
 from pygame import Vector2 as Vec2
 from pathlib import Path
 
@@ -15,7 +16,7 @@ def vector_to_key(vec):
     return (int(vec[0]), int(vec[1]))
 
 class Tile(Entity):
-    
+
     def __init__(self, grid_pos, name, action=None, collides=True):
         self.grid_pos = grid_pos
         pos = grid_pos[0]*TILE_SIZE[0], grid_pos[1]*TILE_SIZE[1]
@@ -67,11 +68,77 @@ class Slime(Tile):
         level.request_swap(blocking_tile.grid_pos, Slime.init_heavy_slime(*blocking_tile.grid_pos))
         return True  # The guy behind me can go
 
-class Level:
+SOLID_TILE_MAPPINGS = [
+    ("tile_16", set()),
+    ("tile_02", {(0, 1)}),
+    ("tile_03", {(-1, 0)}),
+    ("tile_04", {(0, -1)}),
+    ("tile_05", {(1, 0)}),
+    ("tile_06", {(0, 1), (1, 0)}),
+    ("tile_07", {(0, 1), (-1, 0)}),
+    ("tile_08", {(0, -1), (-1, 0)}),
+    ("tile_09", {(0, -1), (1, 0)}),
+    ("tile_10", {(1, 0), (-1, 0)}),
+    ("tile_11", {(0, -1), (0, 1)}),
+    ("tile_12", {(1, 0), (-1, 0), (0, 1)}),
+    ("tile_13", {(0, -1), (0, 1), (1, 0)}),
+    ("tile_14", {(1, 0), (-1, 0), (0, -1)}),
+    ("tile_15", {(0, -1), (0, 1), (-1, 0)})
+]
 
+WATER_TILE_MAPPINGS = [
+    ("tile_31", set()),
+    ("tile_17", {(-1, 0)}),
+    ("tile_18", {(0, 1)}),
+    ("tile_19", {(1, 0)}),
+    ("tile_20", {(0, -1)}),
+    ("tile_21", {(0, -1), (1, 0)}),
+    ("tile_22", {(0, -1), (-1, 0)}),
+    ("tile_23", {(0, 1), (1, 0)}),
+    ("tile_24", {(0, 1), (-1, 0)}),
+    ("tile_25", {(1, 0), (-1, 0)}),
+    ("tile_26", {(0, -1), (0, 1)}),
+    ("tile_27", {(0, -1), (0, 1), (1, 0)}),
+    ("tile_28", {(0, -1), (1, 0), (-1, 0)}),
+    ("tile_29", {(0, -1), (0, 1), (-1, 0)}),
+    ("tile_30", {(0, 1), (1, 0), (-1, 0)})
+]
+
+def try_get_for_mapping(x:int, y:int, level:list[list]):
+    try:
+        return level[y][x]
+    except IndexError:
+        return None
+
+def map_solid_tile(x:int, y:int, level:list[list]):
+    neighbours = set()
+    for x_offset, y_offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        tile = try_get_for_mapping(x + x_offset, y + y_offset, level)
+        if tile != "0" and tile != None:
+            neighbours.add((x_offset, y_offset))
+
+    for tile_name, neighbour_map in SOLID_TILE_MAPPINGS:
+        if neighbour_map == neighbours:
+            return Tile((x, y), tile_name)
+
+    return Tile((x, y), "tile_00")
+
+def map_water_tile(x:int, y:int, level:list[list]):
+    neighbours = set()
+    for x_offset, y_offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        tile = try_get_for_mapping(x + x_offset, y + y_offset, level)
+        if tile != "w" and tile != None:
+            neighbours.add((x_offset, y_offset))
+
+    for tile_name, neighbour_map in WATER_TILE_MAPPINGS:
+        if neighbour_map == neighbours:
+            return Tile((x, y), tile_name)
+
+    return Tile((x, y), "tile_00")
+
+class Level:
     TILE_MAP = {
-            '.': lambda x, y: Tile((x, y), 'ground', collides=False),
-            '0': lambda x, y: Tile((x, y), 'wall'),
+            '.': lambda x, y: Tile((x, y), 'tile_00', collides=False),
             's': lambda x, y: Slime.init_regular_slime(x, y),
             }
 
@@ -182,38 +249,58 @@ class Level:
 
         file_content = '''
 000000000000000000000
-0.........s.........0
-0...0..s..s.........0
-0...0..s..s.........0
-0...00000...........0
+000000000000000000000
+0.........s....000000
+0......s..s.........0
+0......s..s.........0
 0...................0
+0......0000.........0
 0.ssss..............0
-0.ssss..............0
-0.ssss..............0
-0.ssss..............0
+0.ssss......wwwww...0
+0.ssss.......www....0
+0.ssss........w.....0
 000000000000000000000
 '''
-        y = 0
-        for line in file_content.split('\n'):
-            if not line: continue
 
-            x = 0
-            for c in line:
-                if c == ' ': continue
+        level = []
+        for line in file_content.split("\n"):
+            if line:
+                line_list = []
+                while " " in line_list:
+                    line_list.remove(" ")
+                level.append(list(line))
 
-                tile = Level.TILE_MAP[c](x, y)
+        solid_tiles = []
 
+        for y, row in enumerate(level):
+            for x, c in enumerate(row):
                 if c in Level.FG_TILES:
+                    tile = Level.TILE_MAP[c](x, y)
                     fg_tiles[(x, y)] = tile
                     bg_tiles[(x, y)] = Level.TILE_MAP['.'](x, y)
                 else:
-                    bg_tiles[(x, y)] = tile
+                    if c == "0":
+                        solid_tiles.append((x, y))
+                    elif c == "w":
+                        bg_tiles[(x, y)] = map_water_tile(x, y, level)
+                    else:
+                        tile = Level.TILE_MAP[c](x, y)
+                        bg_tiles[(x, y)] = tile
 
-                x += 1
-
-            y += 1
-        
         level_size = (x, y)
+
+        level_copy = copy.deepcopy(level)
+
+        for x, y in solid_tiles.copy():
+            tile = try_get_for_mapping(x, y + 1, level)
+            if tile != '0' and tile != None:
+                bg_tiles[(x, y)] = Tile((x, y), "tile_01")
+                level_copy[y][x] = "."
+                solid_tiles.remove((x, y))
+
+        for x, y in solid_tiles:
+            bg_tiles[(x, y)] = map_solid_tile(x, y, level_copy)
+
         return bg_tiles, fg_tiles, level_size
 
     def render(self, surf):

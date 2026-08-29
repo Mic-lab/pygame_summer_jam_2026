@@ -1,6 +1,8 @@
 #version 330 core
 
 uniform sampler2D canvasTex;
+uniform sampler2D perlinNoise;
+uniform float time;
 uniform float transitionTimer;
 uniform int transitionState;
 uniform float shakeTimer = -1.0;
@@ -10,6 +12,7 @@ out vec4 f_color;
 
 const float PI = 3.14159265359;
 const vec2 gridSize = vec2(64, 64);
+const vec2 screenSize = vec2(640, 360);
 const float caCoef = 0.005;
 const float shakeCoef = 0.01;
 
@@ -24,6 +27,17 @@ float linearEase(float x) {
 
 void main() {
     f_color = vec4(texture(canvasTex, uvs).rgb, 1.0);
+    if (distance(f_color.rgb, vec3(0.251, 0.486, 0.663)) < 0.05) {
+        float scroll = time * 0.00001;
+        vec2 noise_uvs = floor(uvs * screenSize) / screenSize;
+        vec2 flow_1 = noise_uvs + vec2(sin(scroll), cos(scroll));
+        vec2 flow_2 = noise_uvs - vec2(cos(scroll), -sin(scroll));
+
+        float noise = (texture(perlinNoise, flow_1 * 2.0).r + texture(perlinNoise, flow_2 * 2.0).r) * 0.5;
+        if (noise >= 0.42 && noise <= 0.58) {
+            f_color.rgb = vec3(0.569, 0.639, 0.812);
+        }
+    }
     float centerDist = distance(uvs, vec2(0.5, 0.5));
 
     // Blurry shake

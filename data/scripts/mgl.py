@@ -16,6 +16,7 @@ class ShaderHandler:
         self.vert_shader = read_txt('data/scripts/shaders/vert.glsl')
         self.frag_shader = read_txt('data/scripts/shaders/frag.glsl')
         self.surfs = {}
+        self.surf_data = {}
         self.vars = {}
         self.shader_surfs_ids = {}
         self.used_textures = []
@@ -46,7 +47,7 @@ class ShaderHandler:
             else:
                 surf_id = self.shader_surfs_ids[surf_key]
 
-            tex = self.surf2tex(surf)
+            tex = self.surf2tex(surf, self.surf_data.get(surf_key, {}).get("repeat", False))
             tex.use(surf_id)
             self.program[surf_key] = surf_id
             self.used_textures.append(tex)
@@ -60,10 +61,10 @@ class ShaderHandler:
         for key, val in self.vars.items():
             self.program[key] = val
 
-    def surf2tex(self, surf):
+    def surf2tex(self, surf, repeat:bool = False):
         tex = self.ctx.texture(surf.get_size(), 4)
         tex.filter = (moderngl.NEAREST, moderngl.NEAREST)
-        tex.repeat_x = tex.repeat_y = False
+        tex.repeat_x = tex.repeat_y = repeat
         tex.swizzle = 'BGRA'
         tex.write(surf.get_view('1'))
         return tex
