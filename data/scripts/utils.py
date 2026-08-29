@@ -46,3 +46,6 @@ def pan_game_surf(current_size, current_ratio,
     # self.handler.canvas = pygame.Surface(canvas_size)
     return scale, canvas_size
 
+def lerp(a, b, x):
+    return a + (b - a) * x
+

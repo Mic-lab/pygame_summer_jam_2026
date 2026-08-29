@@ -85,7 +85,10 @@ class PressurePlate(Tile):
         if tile.weight > 1:
             super().on_stepped(level, tile)
             self.animation.set_action('down')
-    
+        else:
+            if self.stepped_on:
+                self.on_stepped_released(level)
+
     def on_stepped_released(self, level):
         super().on_stepped_released(level)
         self.animation.set_action('up')

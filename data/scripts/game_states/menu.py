@@ -9,6 +9,7 @@ from ..timer import Timer
 from ..particle import Particle, ParticleGenerator
 from .. import sfx
 from .. import screen, config
+from .. import colors
 import pygame
 
 class Menu(State):
@@ -33,14 +34,13 @@ class Menu(State):
         self.text = fonts['basic'].get_surf('''[WASD] Move
 [LMB] Particles
 [RMB] Chromatic Aberration''', color=(0, 150, 200))
-        sfx.play_custom_music(sfx.sounds['song_1.wav'])
 
     def sub_update(self):
 
         if self.inputs['pressed'].get('mouse3'):
             self.timer.reset()
 
-        self.game_surf.fill((20, 20, 20))
+        self.game_surf.fill(colors.BLACK)
 
         if self.inputs['pressed'].get('mouse1'):
             self.particle_gens.append(ParticleGenerator.from_template(self.inputs['game_mouse_pos'], 'smoke'))
@@ -73,39 +73,12 @@ class Menu(State):
                     shader_handler.ctx.viewport = (0, 0, config.screen_size[0], config.screen_size[1])
                     # btn.text = f'Window Scale ({config.scale}x)'
                 elif key == 'fullscreen':
+                    fullscreen = self.toggle_fullscreen()
 
-                    if pygame.display.is_fullscreen():
-                        config.scale = 2
-                        config.screen_size = pygame.Vector2(config.GAME_SIZE)*config.scale
-                        self.handler.set_canvas_size(config.GAME_SIZE)
-
-                        screen.create_screen()
-                        shader_handler.ctx.viewport = (0, 0, *config.screen_size)
-                        
-                        self.buttons['scale'].enable()
-                        # self.buttons['scale'].text = f'Window Scale ({config.scale}x)'
-
-                    else:
-                        # desktop_size = pygame.display.get_desktop_sizes()[0]
-                        # ^ There's also this but not sure how this works for dual monitor setup:
-                        pygame.display.toggle_fullscreen()
-                        desktop_size = pygame.display.get_window_size()
-
-                        resize_scale, new_canvas_size = utils.pan_game_surf(
-                                self.handler.canvas.get_size(),
-                                config.GAME_RATIO,
-                                desktop_size,
-                                desktop_size[0]/desktop_size[1])
-                        
-                        self.handler.set_canvas_size(new_canvas_size)
-                        config.scale = resize_scale
-                        config.screen_size = desktop_size
-                        screen.create_screen()
-
-                        pygame.display.toggle_fullscreen()
-                        shader_handler.ctx.viewport = (0, 0, *config.screen_size)
-
+                    if fullscreen:
                         self.buttons['scale'].disable()
+                    else:
+                        self.buttons['scale'].enable()
 
         self.game_surf.blit(self.text, (50, 200))
 

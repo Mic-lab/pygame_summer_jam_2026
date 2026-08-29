@@ -20,6 +20,14 @@ def load_sounds():
         full_file = os.path.join(SOUNDS_DIR, file)
         sound = pygame.mixer.Sound(full_file)
         print(f'Loading {file}')
+
+        v = 0.5
+        if file.startswith('step'):
+            v = 0.2
+
+        sound.set_volume(v)
+
+
         sounds[file] = sound
     return sounds
 

@@ -19,13 +19,12 @@ class GameHandler:
         shader_handler.surfs["perlinNoise"] = pygame.image.load("data/imgs/animations/perlin_noise.png").convert_alpha()
         shader_handler.surf_data["perlinNoise"] = {"repeat":True}
         Animation.load_db()
-        sfx.init_custom_music()
 
         self.states = game_states
         self.set_canvas_size(config.GAME_SIZE)
         self.clock = pygame.time.Clock()
         self.inputs = {'pressed': {}, 'released': {}, 'held': {}}
-        # self.set_state(self.states.Menu)
+        self.set_state(self.states.Menu)
         self.set_state(self.states.Game)
         self.transition = Transition()
 

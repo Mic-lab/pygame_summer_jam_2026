@@ -3,10 +3,11 @@
 uniform sampler2D canvasTex;
 uniform sampler2D perlinNoise;
 uniform float time;
-uniform float transitionTimer;
-uniform int transitionState;
+uniform float transitionTimer = -1.0;
+uniform int transitionState = 0;
 uniform float shakeTimer = -1.0;
 uniform float caTimer = -1.0;
+uniform float flashTimer = -1.0;
 in vec2 uvs;
 out vec4 f_color;
 
@@ -30,6 +31,20 @@ float linearEase(float x) {
 void main() {
     f_color = vec4(texture(canvasTex, uvs).rgb, 1.0);
     float centerDist = distance(uvs, vec2(0.5, 0.5));
+
+    // Chromatic abberation
+    // float ca = caTimer*0.0001+0.8;
+    float ca = caTimer;
+    if (ca >= 0.0) {
+        float caIntensity = ca*centerDist * caCoef;
+        vec2 sampleVec = vec2(0.0, caIntensity);
+        float caSample1 = texture(canvasTex, uvs + sampleVec).r;
+        float caSample2 = texture(canvasTex, uvs - rotateVec(sampleVec, 2.0*PI/3.0)).g;
+        float caSample3 = texture(canvasTex, uvs - rotateVec(sampleVec, 4.0*PI/3.0)).b;
+        f_color.r = caSample1;
+        f_color.g = caSample2;
+        f_color.b = caSample3;
+    }
 
     // Water
     if (distance(f_color.rgb, vec3(0.251, 0.486, 0.663)) < 0.05) {
@@ -55,22 +70,27 @@ void main() {
         f_color = mix(f_color, sampleMix, 0.5);
     }
 
-    // Chromatic abberation
-    // float ca = caTimer*0.0001+0.8;
-    float ca = caTimer;
-    if (ca >= 0.0) {
-        float caIntensity = ca*centerDist * caCoef;
-        vec2 sampleVec = vec2(0.0, caIntensity);
-        float caSample1 = texture(canvasTex, uvs + sampleVec).r;
-        float caSample2 = texture(canvasTex, uvs - rotateVec(sampleVec, 2.0*PI/3.0)).g;
-        float caSample3 = texture(canvasTex, uvs - rotateVec(sampleVec, 4.0*PI/3.0)).b;
-        f_color.r = caSample1;
-        f_color.g = caSample2;
-        f_color.b = caSample3;
+    // Win flash
+    if (flashTimer > 0) {
+        float intensity = mix(1, 0.8, pow(flashTimer, 5));
+        f_color.r = pow(f_color.r, intensity);
+        f_color.g = pow(f_color.g, intensity);
+        f_color.b = pow(f_color.b, intensity);
     }
 
-    // Vignette with hue shift
-    f_color.r *= 1-centerDist;
+    // Vignette + color filters
+
+    // f_color.b = pow(f_color.b, mix(0.2, 1, centerDist));
+    // f_color.g = pow(f_color.g, mix(0.6, 1, centerDist));
+
+    // float r = f_color.r;
+    // float g = f_color.g;
+    // float b = f_color.b;
+    // f_color.r = g;
+    // f_color.g = r;
+
+    f_color.r *= 1.3-1.3*centerDist;
+    f_color.b *= 1-0*centerDist;
 
     /*
     0  No transition
