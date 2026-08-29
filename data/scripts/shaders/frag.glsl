@@ -89,8 +89,8 @@ void main() {
     // f_color.r = g;
     // f_color.g = r;
 
-    f_color.r *= 1.3-1.3*centerDist;
-    f_color.b *= 1-0*centerDist;
+    // f_color.r *= 1.3-1.3*centerDist;
+    // f_color.b *= 1-0*centerDist;
 
     /*
     0  No transition
