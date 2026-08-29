@@ -27,9 +27,6 @@ class Menu(State):
             'fullscreen': Button(get_rect(5), f'Fullscreen', 'basic')
         }
 
-        self.img_entity = Entity((0, 0), 'test')
-        self.player = PhysicsEntity(pos=(150, 30), name='side', action='idle')
-        self.e_speed = 1.5
         self.timer = Timer(20, done=True)
         self.particle_gens = [ParticleGenerator.from_template((200, 200), 'angle test'),
                               ParticleGenerator.from_template((300, 200), 'color test')]
@@ -44,9 +41,6 @@ class Menu(State):
             self.timer.reset()
 
         self.game_surf.fill((20, 20, 20))
-
-        self.img_entity.real_pos = self.inputs['game_mouse_pos']
-        self.img_entity.render(self.game_surf)
 
         if self.inputs['pressed'].get('mouse1'):
             self.particle_gens.append(ParticleGenerator.from_template(self.inputs['game_mouse_pos'], 'smoke'))
@@ -113,30 +107,9 @@ class Menu(State):
 
                         self.buttons['scale'].disable()
 
-        self.player.vel = [0, 0]
-        if self.inputs['held'].get('a'):
-            self.player.vel[0] -= self.e_speed
-            self.player.animation.flip[0] = True
-        elif self.inputs['held'].get('d'):
-            self.player.vel[0] += self.e_speed
-            self.player.animation.flip[0] = False
-        if self.inputs['held'].get('w'):
-            self.player.vel[1] -= self.e_speed
-        elif self.inputs['held'].get('s'):
-            self.player.vel[1] += self.e_speed
-
-        if any(self.player.vel):
-            self.player.animation.set_action('run')
-        else:
-            self.player.animation.set_action('idle')
-
-        self.player.update([btn.rect for btn in self.buttons.values()])
-        self.player.render(self.game_surf)
-
         self.game_surf.blit(self.text, (50, 200))
 
         text = [f'{round(self.handler.clock.get_fps())} fps',
-                f'vel = {self.player.vel}',
                 # pprint.pformat(Particle.cache)
                 ]
 
