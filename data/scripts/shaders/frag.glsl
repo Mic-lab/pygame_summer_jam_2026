@@ -15,6 +15,8 @@ const vec2 gridSize = vec2(64, 64);
 const vec2 screenSize = vec2(640, 360);
 const float caCoef = 0.005;
 const float shakeCoef = 0.01;
+const vec3 purpleColor1 = vec3(53, 1, 75)/255;
+const vec3 purpleColor2 = vec3(124, 1, 114)/255;
 
 vec2 rotateVec(vec2 vec, float theta) {
     return vec.x * vec2(cos(theta), sin(theta))
@@ -27,6 +29,9 @@ float linearEase(float x) {
 
 void main() {
     f_color = vec4(texture(canvasTex, uvs).rgb, 1.0);
+    float centerDist = distance(uvs, vec2(0.5, 0.5));
+
+    // Water
     if (distance(f_color.rgb, vec3(0.251, 0.486, 0.663)) < 0.05) {
         float scroll = time * 0.00002;
         vec2 noise_uvs = floor(uvs * screenSize) / screenSize;
@@ -38,7 +43,6 @@ void main() {
             f_color.rgb = vec3(0.569, 0.639, 0.812);
         }
     }
-    float centerDist = distance(uvs, vec2(0.5, 0.5));
 
     // Blurry shake
     if (shakeTimer >= 0) {
@@ -52,8 +56,10 @@ void main() {
     }
 
     // Chromatic abberation
-    if (caTimer >= 0.0) {
-        float caIntensity = caTimer*centerDist * caCoef;
+    // float ca = caTimer*0.0001+0.8;
+    float ca = caTimer;
+    if (ca >= 0.0) {
+        float caIntensity = ca*centerDist * caCoef;
         vec2 sampleVec = vec2(0.0, caIntensity);
         float caSample1 = texture(canvasTex, uvs + sampleVec).r;
         float caSample2 = texture(canvasTex, uvs - rotateVec(sampleVec, 2.0*PI/3.0)).g;
@@ -62,6 +68,9 @@ void main() {
         f_color.g = caSample2;
         f_color.b = caSample3;
     }
+
+    // Vignette with hue shift
+    f_color.r *= 1-centerDist;
 
     /*
     0  No transition

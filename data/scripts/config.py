@@ -7,3 +7,5 @@ scale = 2
 screen_size = scale*GAME_SIZE[0], scale*GAME_SIZE[1]
 
 fps = 60
+
+TILE_SIZE = (24, 24)

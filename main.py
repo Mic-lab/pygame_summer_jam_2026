@@ -8,6 +8,7 @@ from data.scripts.screen import create_screen
 from data.scripts.transition import Transition, TransitionState
 from data.scripts.animation import Animation
 from data.scripts import sfx
+import move_imgs
 
 class GameHandler:
 
@@ -108,4 +109,6 @@ class GameHandler:
         pygame.quit()
         sys.exit()
 
-GameHandler().run()
+if __name__ == '__main__':
+    move_imgs.move()
+    GameHandler().run()
