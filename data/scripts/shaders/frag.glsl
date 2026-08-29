@@ -28,13 +28,13 @@ float linearEase(float x) {
 void main() {
     f_color = vec4(texture(canvasTex, uvs).rgb, 1.0);
     if (distance(f_color.rgb, vec3(0.251, 0.486, 0.663)) < 0.05) {
-        float scroll = time * 0.00001;
+        float scroll = time * 0.00002;
         vec2 noise_uvs = floor(uvs * screenSize) / screenSize;
         vec2 flow_1 = noise_uvs + vec2(sin(scroll), cos(scroll));
         vec2 flow_2 = noise_uvs - vec2(cos(scroll), -sin(scroll));
 
         float noise = (texture(perlinNoise, flow_1 * 2.0).r + texture(perlinNoise, flow_2 * 2.0).r) * 0.5;
-        if (noise >= 0.42 && noise <= 0.58) {
+        if (noise >= 0.43 && noise <= 0.57) {
             f_color.rgb = vec3(0.569, 0.639, 0.812);
         }
     }
