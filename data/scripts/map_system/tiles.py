@@ -1,6 +1,7 @@
 from ..entity import Entity
 from ..config import TILE_SIZE
 from pygame import Vector2 as Vec2
+from pygame.math import lerp
 
 def vector_to_key(vec):
     return (int(vec[0]), int(vec[1]))
@@ -48,6 +49,8 @@ class Slime(Tile):
     def __init__(self, *args, weight=1, **kwargs):
         super().__init__(*args, **kwargs)
         self.weight = weight
+        self.old_pos = self.pos.copy()
+        self.sprite_lerp = 1
 
     def update(self, game):
         super().update(game)
@@ -61,10 +64,15 @@ class Slime(Tile):
                     move_direction = looped_direction
                     break
 
-        if move_direction:
+        if move_direction and self.sprite_lerp == 1:
+            self.old_pos.xy = self.pos.xy
             desired_pos = Vec2(self.grid_pos) + move_direction
             level.request_fg_move(vector_to_key(self.grid_pos), vector_to_key(desired_pos))
-        
+            self.sprite_lerp = 0
+
+        self.sprite_lerp += 1 / 60 * 5 #to replace with dt?
+        self.sprite_lerp = min(1, self.sprite_lerp)
+    
     def on_contact(self, level, blocking_tile):
         if not isinstance(blocking_tile, Slime):
             return False
@@ -75,6 +83,9 @@ class Slime(Tile):
         level.request_delete(self.grid_pos)
         level.request_swap(blocking_tile.grid_pos, Slime.init_heavy_slime(*blocking_tile.grid_pos))
         return True  # Give permission for the guy behind me to go
+
+    def render(self, surf, offset=(0, 0)):
+        surf.blit(self.img, Vec2(lerp(self.old_pos.x, self.pos.x, self.sprite_lerp), lerp(self.old_pos.y, self.pos.y, self.sprite_lerp)) + offset)
 
 class PressurePlate(Tile):
 
