@@ -97,6 +97,7 @@ class Level:
             "@": lambda x, y: tiles.RotatedTile((x, y), "tile_32", collides=False),
             "1": lambda x, y: tiles.Tile((x, y), "tile_34"),
             "f": lambda x, y: tiles.Tile((x, y), "pot", action='idle'),
+            "b": lambda x, y: tiles.Bow((x, y), "bow"),
             }
 
     FG_TILES = ('s')
@@ -112,6 +113,7 @@ class Level:
         self.desired_to_current_requests = {}
         self.current_to_desired_requests = {}
         self.delete_requests = set()
+        self.fg_place_requests = {}
 
         self.added_surf = False
         self.pressed_pressure_plate = False
@@ -139,6 +141,10 @@ class Level:
         self.desired_to_current_requests.setdefault(desired_pos, [])
         self.desired_to_current_requests[desired_pos].append(current_pos)
         self.current_to_desired_requests[current_pos] = desired_pos
+
+    def request_fg_place(self, tile, grid_pos):
+        self.fg_place_requests.setdefault(grid_pos, [])
+        self.fg_place_requests[grid_pos].append(tile)
 
     def request_delete(self, current_pos):
         self.delete_requests.add(current_pos)
@@ -269,8 +275,25 @@ class Level:
             return True
 
     def handle_requests(self, game):
+
+        # Handle placement (arrow for example)
+        for place_pos, tiles in self.fg_place_requests.items():
+            # If multiple things want to spawn on the same tile...
+            # Probably won't happen, so I'll ignore this case
+            if len(tiles) > 1: continue
+            placed_tile = tiles[0]
+            if blocking_tile := self.fg_tiles.get(place_pos):
+                replace_blocking_tile = placed_tile.on_place_collision(self)
+                if replace_blocking_tile:
+                    self.fg_tiles[place_pos] = placed_tile
+            else:
+                self.fg_tiles[place_pos] = placed_tile
+
+
+                
+
+        # Handle movement
         accepted_movement_requests = {}
-        
         for current_pos, desired_pos in self.current_to_desired_requests.items():
             if self._resolve_movement_request(current_pos, desired_pos, set()):
                 # delete_requests gets updated after resolving

@@ -162,4 +162,32 @@ class PressurePlate(Tile):
         super().on_stepped_released(level)
         self.animation.set_action('up')
 
+class Arrow(Tile):
+    pass
+    
+    # def update(self, game):
+    #     super().update(game)
 
+class Bow(Tile):
+
+    def __init__(self, grid_pos, name):
+        super().__init__(grid_pos, name, action='charging')
+        self.shoot_direction = Vec2(1, 0)
+        self.charge()
+
+    def charge(self):
+        self.charged = True
+        self.animation.set_action('charging', reset=True)
+
+    def update(self, game):
+        animation_done = super().update
+        level = game.game_map.level
+        if animation_done and self.animation.action == 'charging':
+            self.animation.set_action('charged')
+
+        if self.charged:
+            arrow_grid_pos = self.grid_pos+self.shoot_direction
+            arrow = Arrow(arrow_grid_pos, 'arrow', action='idle')
+            level.request_fg_place(arrow, vector_to_key(arrow_grid_pos))
+            self.charged = False
+            # TODO: Make level store player moved variable and use that to update arrow and Bow
