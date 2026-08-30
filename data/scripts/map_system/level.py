@@ -172,7 +172,11 @@ class Level:
             img = fonts['basic'].get_surf(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
             self.add_surf(img, (0, 60), center_x=True)
             self.added_surf = True
-            
+
+        if self.level_name == "level_0" and not self.added_surf:
+            img = fonts['basic'].get_surf(f'Two pressure plates now?\n D\'you think slimes like swimming?')
+            self.add_surf(img, (0, 60), center_x=True)
+            self.added_surf = True
 
         for tile in self.fg_tiles.values():
             tile.update(game)
