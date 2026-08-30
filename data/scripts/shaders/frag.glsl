@@ -47,7 +47,7 @@ void main() {
     }
 
     // Water
-    if (distance(f_color.rgb, vec3(0.251, 0.486, 0.663)) < 0.05) {
+    if (distance(f_color.rgb, vec3(0.353, 0.259, 0.663)) < 0.05) {
         float scroll = time * 0.00002;
         vec2 noise_uvs = floor(uvs * screenSize) / screenSize;
         vec2 flow_1 = noise_uvs + vec2(sin(scroll), cos(scroll));
@@ -55,7 +55,7 @@ void main() {
 
         float noise = (texture(perlinNoise, flow_1 * 2.0).r + texture(perlinNoise, flow_2 * 2.0).r) * 0.5;
         if (noise >= 0.43 && noise <= 0.57) {
-            f_color.rgb = vec3(0.569, 0.639, 0.812);
+            f_color.rgb = vec3(0.369, 0.443, 0.722);
         }
     }
 

@@ -46,6 +46,8 @@ WATER_TILE_MAPPINGS = [
     ("tile_30", {(0, 1), (1, 0), (-1, 0)})
 ]
 
+ANIMATED_WATER_TILES = {"tile_20", "tile_21", "tile_22", "tile_26", "tile_27", "tile_28", "tile_29"}
+
 def try_get_for_mapping(x:int, y:int, level:list[list]):
     try:
         return level[y][x]
@@ -74,7 +76,10 @@ def map_water_tile(x:int, y:int, level:list[list]):
 
     for tile_name, neighbour_map in WATER_TILE_MAPPINGS:
         if neighbour_map == neighbours:
-            return tiles.Tile((x, y), tile_name)
+            if tile_name in ANIMATED_WATER_TILES:
+                return tiles.Tile((x, y), tile_name, "idle")
+            else:
+                return tiles.Tile((x, y), tile_name)
 
     return tiles.Tile((x, y), "tile_00")
 
@@ -85,6 +90,8 @@ class Level:
             '.': lambda x, y: tiles.Tile((x, y), 'tile_00', collides=False),
             's': lambda x, y: tiles.Slime.init_regular_slime(x, y),
             'p': lambda x, y: tiles.PressurePlate((x, y)),
+            "#": lambda x, y: tiles.Tile((x, y), "tile_33", collides=False),
+            "@": lambda x, y: tiles.Tile((x, y), "tile_32", collides=False)
             }
 
     FG_TILES = ('s')
