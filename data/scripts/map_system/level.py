@@ -10,6 +10,8 @@ from .. import sfx
 from ..animation import Animation
 import random
 
+SOLID_TILES = {"0", "1"}
+
 SOLID_TILE_MAPPINGS = [
     ("tile_16", set()),
     ("tile_02", {(0, 1)}),
@@ -91,7 +93,8 @@ class Level:
             's': lambda x, y: tiles.Slime.init_regular_slime(x, y),
             'p': lambda x, y: tiles.PressurePlate((x, y)),
             "#": lambda x, y: tiles.Tile((x, y), "tile_33", collides=False),
-            "@": lambda x, y: tiles.Tile((x, y), "tile_32", collides=False)
+            "@": lambda x, y: tiles.Tile((x, y), "tile_32", collides=False),
+            "1": lambda x, y: tiles.Tile((x, y), "tile_34")
             }
 
     FG_TILES = ('s')
@@ -307,7 +310,7 @@ class Level:
         level_copy = copy.deepcopy(level)
         for x, y in solid_tiles.copy():
             tile = try_get_for_mapping(x, y + 1, level)
-            if tile != '0' and tile != None:
+            if tile not in SOLID_TILES and tile != None:
                 bg_tiles[(x, y)] = tiles.Tile((x, y), "tile_01")
                 level_copy[y][x] = "."
                 solid_tiles.remove((x, y))
