@@ -64,5 +64,4 @@ class Game(State):
 
         self.game_surf.blit(fonts['basic'].get_surf('\n'.join(text)), (0, 0))
 
-        shader_handler.vars['caTimer'] = 1-self.game_map.level.win_timer.ratio
         shader_handler.vars['flashTimer'] = 1-self.game_map.level.win_timer.ratio

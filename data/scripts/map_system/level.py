@@ -8,6 +8,7 @@ from ..timer import Timer
 from ..font import fonts
 from .. import sfx
 from ..animation import Animation
+from ..mgl import shader_handler
 import random
 
 SOLID_TILES = {"0", "1"}
@@ -89,12 +90,13 @@ def map_water_tile(x:int, y:int, level:list[list]):
 
 class Level:
     TILE_MAP = {
-            '.': lambda x, y: tiles.Tile((x, y), 'tile_00', collides=False),
+            '.': lambda x, y: tiles.RotatedTile((x, y), 'tile_00', collides=False),
             's': lambda x, y: tiles.Slime.init_regular_slime(x, y),
             'p': lambda x, y: tiles.PressurePlate((x, y)),
             "#": lambda x, y: tiles.Tile((x, y), "tile_33", collides=False),
-            "@": lambda x, y: tiles.Tile((x, y), "tile_32", collides=False),
-            "1": lambda x, y: tiles.Tile((x, y), "tile_34")
+            "@": lambda x, y: tiles.RotatedTile((x, y), "tile_32", collides=False),
+            "1": lambda x, y: tiles.Tile((x, y), "tile_34"),
+            "f": lambda x, y: tiles.Tile((x, y), "pot", action='idle'),
             }
 
     FG_TILES = ('s')
@@ -115,13 +117,16 @@ class Level:
         self.pressed_pressure_plate = False
 
         self.win_timer = Timer(120, done=True)
+        self.restart_timer = Timer(30)
+        self.restarting = False
+        self.allow_restart = True
         self._screen_shake = 0
 
     def commence_win(self):
         self.win = True
         self.win_timer.reset()
         self.shake_screen()
-        y = 30
+        y = 20
         self.add_surf(Animation.img_db['banner'], pos=(0, y), center_x=True, speed=3)
         self.add_surf(fonts['basic'].get_surf('Level complete! Press <Enter> to continue', color=(255, 100, 255)), pos=(0, y), center_x=True, speed=3)
 
@@ -168,18 +173,25 @@ class Level:
                 self.commence_win()
 
 
+        # Handle dialogue ---------------------- #
         if self.pressed_pressure_plate and self.level_name == 'tutorial_0' and not self.added_surf:
             img = fonts['basic'].get_surf(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
-            self.add_surf(img, (0, 60), center_x=True)
+            self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
 
-        if self.level_name == "level_0" and not self.added_surf:
+        elif self.level_name == "level_0" and not self.added_surf:
             img = fonts['basic'].get_surf(f'Two pressure plates now?\n D\'you think slimes like swimming?')
-            self.add_surf(img, (0, 60), center_x=True)
+            self.add_surf(img, (0, 40), center_x=True)
+            self.added_surf = True
+
+        elif self.level_name == "level_1" and not self.added_surf:
+            img = fonts['basic'].get_surf(f'Hold [r] to restart')
+            self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
 
         for tile in self.fg_tiles.values():
             tile.update(game)
+        # -------------------------------------- #
 
         self.handle_requests(game)
 
@@ -187,6 +199,23 @@ class Level:
         if self._screen_shake < 0.3: self._screen_shake = 0
         self.win_timer.update()
 
+
+        # To prevent second restart from starting
+        if game.inputs['released'].get('r'):
+            self.allow_restart = True
+        self.restarting = game.inputs['held'].get('r') and self.allow_restart
+
+        if self.restarting:
+            if self.restart_timer.ratio < 1: self.restart_timer.frame += 1
+        elif self.restart_timer.frame > 0:
+            self.restart_timer.frame -= 1
+        if self.restart_timer.ratio == 1:
+            # self.restart_timer.reset()
+            self.restart()
+
+    def restart(self):
+        self.bg_tiles, self.fg_tiles, self.level_size = self.load_level(self.level_name)
+        self.allow_restart = False
 
     def _resolve_movement_request(self, current_pos, desired_pos, visited):
         """
@@ -290,9 +319,13 @@ class Level:
                 level.append(list(line))
 
         # Initialize the tile objects but don't handle autotile objects
+        max_x = -1
+        max_y = -1
         solid_tiles = []
         for y, row in enumerate(level):
+            if y > max_y: max_y = y
             for x, c in enumerate(row):
+                if x > max_x: max_x = x
                 if c in Level.FG_TILES:
                     tile = Level.TILE_MAP[c](x, y)
                     fg_tiles[(x, y)] = tile
@@ -308,7 +341,7 @@ class Level:
                         tile = Level.TILE_MAP[c](x, y)
                         bg_tiles[(x, y)] = tile
 
-        level_size = (x, y)
+        level_size = (max_x, max_y)
 
         # Create the autotile objects
         level_copy = copy.deepcopy(level)
@@ -339,7 +372,14 @@ class Level:
             looped_surf, pos, alpha, speed = surf_data
             ratio = alpha / 255
             looped_surf.set_alpha(alpha)
-            surf.blit(looped_surf, Vec2(pos) + (0, 50*(1-(min(2*ratio, 1)))**2))
+            surf.blit(looped_surf, Vec2(pos) + (0, 30*(1-(min(2*ratio, 1)))**2))
             
             surf_data[2] += speed
             if surf_data[2] > 255: surf_data[2] = 255
+            
+        shader_handler.vars['restartTimer'] = self.restart_timer.ratio
+
+        if self.restarting:
+            shader_handler.vars['caTimer'] = self.restart_timer.ratio*3
+        else:
+            shader_handler.vars['caTimer'] = 1-self.win_timer.ratio

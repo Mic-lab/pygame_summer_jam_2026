@@ -8,6 +8,7 @@ uniform int transitionState = 0;
 uniform float shakeTimer = -1.0;
 uniform float caTimer = -1.0;
 uniform float flashTimer = -1.0;
+uniform float restartTimer = -1.0;
 in vec2 uvs;
 out vec4 f_color;
 
@@ -76,6 +77,15 @@ void main() {
         f_color.r = pow(f_color.r, intensity);
         f_color.g = pow(f_color.g, intensity);
         f_color.b = pow(f_color.b, intensity);
+    }
+
+    // Restart timer
+    if (restartTimer > 0) {
+        vec3 gray = vec3((f_color.r + f_color.g + f_color.b)/3);
+        float intensity = mix(0, 1, restartTimer);
+        gray.b*=intensity*3;
+        f_color.rgb = mix(f_color.rgb, gray, (min(1.4*intensity, 1)));
+        f_color *= 1-intensity;
     }
 
     // Vignette + color filters

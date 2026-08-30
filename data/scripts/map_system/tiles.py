@@ -1,6 +1,8 @@
 from ..entity import Entity
 from ..config import TILE_SIZE
+from ..timer import Timer
 from pygame import Vector2 as Vec2
+import random
 import pygame
 
 def vector_to_key(vec):
@@ -68,6 +70,22 @@ class Tile(Entity):
     def on_stepped_released(self, level):
         self.stepped_on = False
 
+class RotatedTile(Tile):
+
+    img_cache = {}
+
+    def __init__(self, *args, **kwargs):
+        self.look_angle = random.choice((0, 90, 180, 270))
+        super().__init__(*args, **kwargs)
+
+    @property
+    def img(self):
+        key = (self.name, self.look_angle)
+        if key not in self.img_cache:
+            self.img_cache[key] = pygame.transform.rotate(super().img, self.look_angle)
+        return self.img_cache[key]
+        
+
 class Slime(Tile):
 
     DIRECTION_MAP = {
@@ -88,6 +106,7 @@ class Slime(Tile):
     def __init__(self, *args, weight=1, **kwargs):
         super().__init__(*args, **kwargs)
         self.weight = weight
+        self.move_timer = Timer(5, True)
 
     def update(self, game):
         super().update(game)
@@ -97,13 +116,23 @@ class Slime(Tile):
         move_direction = None
         for keys, looped_direction in Slime.DIRECTION_MAP.items():
             for k in keys:
-                if game.inputs['pressed'].get(k):
+
+                if game.inputs['held'].get('left shift'):
+                    if game.inputs['held'].get(k) and self.move_timer.done:
+                        self.move_timer.reset()
+                        move_direction = looped_direction
+                        break
+
+
+                elif game.inputs['pressed'].get(k):
                     move_direction = looped_direction
                     break
 
         if move_direction:
             desired_pos = Vec2(self.grid_pos) + move_direction
             level.request_fg_move(vector_to_key(self.grid_pos), vector_to_key(desired_pos))
+
+        self.move_timer.update()
     
     def on_contact(self, level, blocking_tile):
         if not isinstance(blocking_tile, Slime):
