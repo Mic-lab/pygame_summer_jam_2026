@@ -1,7 +1,7 @@
 from ..entity import Entity
 from ..config import TILE_SIZE
 from pygame import Vector2 as Vec2
-from pygame.math import lerp
+import pygame
 
 def vector_to_key(vec):
     return (int(vec[0]), int(vec[1]))
@@ -14,8 +14,47 @@ class Tile(Entity):
         super().__init__(pos, name, action)
         self.collides = collides
         self.stepped_on = False
+        self.stretch = Vec2(0)
+        self.stretch_vel = Vec2(0)
+
+    @property
+    def end_pos(self):
+        return Vec2(self.grid_pos[0]*TILE_SIZE[0], self.grid_pos[1]*TILE_SIZE[1])
+
+    @property
+    def pull_strength(self):
+        return 0.3*(-self.pos+self.end_pos)
+
+    @property
+    def img(self):
+        base_img = super().img
+        ratio = [
+                (1+abs(self.stretch[0])),
+                (1+abs(self.stretch[1]))
+                ]
+        ratio = (ratio[0]/ratio[1],
+                 ratio[1]/ratio[0])  # Stretch one axis while compressing the other
+        return pygame.transform.scale(base_img,
+                                      (base_img.get_width()*ratio[0],
+                                       base_img.get_height()*ratio[1])
+                                      )
+
+    def render(self, surf, offset=(0, 0)):
+        offset = pygame.Vector2(offset)
+        offset -= 0.5*(Vec2(self.img.get_size()) - super().img.get_size())
+        return super().render(surf, offset)
 
     def update(self, game):
+        self.real_pos += self.pull_strength
+
+        # self.stretch_vel += 0.03*self.pull_strength
+        # self.stretch += self.stretch_vel 
+        # self.stretch_vel += 0.3*-self.stretch
+        # self.stretch_vel *= 0.8
+
+        self.stretch = self.pull_strength*0.1
+
+
         return super().update()
 
     def on_contact(self, level, blocking_tile):
@@ -49,8 +88,6 @@ class Slime(Tile):
     def __init__(self, *args, weight=1, **kwargs):
         super().__init__(*args, **kwargs)
         self.weight = weight
-        self.old_pos = self.pos.copy()
-        self.sprite_lerp = 1
 
     def update(self, game):
         super().update(game)
@@ -64,14 +101,9 @@ class Slime(Tile):
                     move_direction = looped_direction
                     break
 
-        if move_direction and self.sprite_lerp == 1:
-            self.old_pos.xy = self.pos.xy
+        if move_direction:
             desired_pos = Vec2(self.grid_pos) + move_direction
             level.request_fg_move(vector_to_key(self.grid_pos), vector_to_key(desired_pos))
-            self.sprite_lerp = 0
-
-        self.sprite_lerp += 1 / 60 * 5 #to replace with dt?
-        self.sprite_lerp = min(1, self.sprite_lerp)
     
     def on_contact(self, level, blocking_tile):
         if not isinstance(blocking_tile, Slime):
@@ -83,9 +115,6 @@ class Slime(Tile):
         level.request_delete(self.grid_pos)
         level.request_swap(blocking_tile.grid_pos, Slime.init_heavy_slime(*blocking_tile.grid_pos))
         return True  # Give permission for the guy behind me to go
-
-    def render(self, surf, offset=(0, 0)):
-        surf.blit(self.img, Vec2(lerp(self.old_pos.x, self.pos.x, self.sprite_lerp), lerp(self.old_pos.y, self.pos.y, self.sprite_lerp)) + offset)
 
 class PressurePlate(Tile):
 

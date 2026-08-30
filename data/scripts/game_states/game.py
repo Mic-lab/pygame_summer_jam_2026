@@ -23,6 +23,7 @@ class GameMap:
             'level_0',
             'level_1',
             'level_2',
+            'level_3',
             )
 
     def __init__(self):

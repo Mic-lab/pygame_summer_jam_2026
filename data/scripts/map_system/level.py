@@ -262,7 +262,7 @@ class Level:
         slime_moved = False
         for desired_pos, placed_tile in pending_placements.items():
             placed_tile.grid_pos = desired_pos
-            placed_tile.real_pos = (placed_tile.grid_pos[0]*config.TILE_SIZE[0], placed_tile.grid_pos[1]*config.TILE_SIZE[1])
+            # placed_tile.real_pos = (placed_tile.grid_pos[0]*config.TILE_SIZE[0], placed_tile.grid_pos[1]*config.TILE_SIZE[1])
             self.fg_tiles[desired_pos] = placed_tile
             slime_moved = True
 
