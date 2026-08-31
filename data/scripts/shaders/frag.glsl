@@ -48,6 +48,7 @@ void main() {
     }
 
     // Lava
+    int apply_lava_bloom = 1;
     if (distance(f_color.rgb, vec3(1.000, 0.000, 0.000)) < 0.05) {
         float scroll = time * 0.00002;
         vec2 noise_uvs = floor(uvs * screenSize) / screenSize;
@@ -62,7 +63,21 @@ void main() {
         } else {
             f_color.rgb = vec3(1.00, 0.639, 0.247);
         };
+
+        apply_lava_bloom = 0;
     }
+
+    int bloom = 0;
+    float dist = 0;
+    for (float i = 0.; i < 5.; i += 0.25) {
+        if (distance(texture(canvasTex, uvs + vec2(0, i/100)).rgb, vec3(1.000, 0.000, 0.000)) < 0.05) {
+            dist = i;
+            bloom = 1;
+            break;
+        };
+    };
+
+    f_color.rgb += vec3(1.00, 0.639, 0.247) * 0.2 * (1. - (dist / 5.)) * bloom * apply_lava_bloom;
 
     // Blurry shake
     if (shakeTimer >= 0) {

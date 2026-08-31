@@ -186,12 +186,12 @@ class Level:
             self.added_surf = True
 
         elif self.level_name == "level_0" and not self.added_surf:
-            img = fonts['basic'].get_surf(f'Two pressure plates now?\n D\'you think slimes like swimming?')
+            img = fonts['basic'].get_surf(f'Two pressure plates now?\n Make sure to hold [r] to restart!')
             self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
 
         elif self.level_name == "level_1" and not self.added_surf:
-            img = fonts['basic'].get_surf(f'Hold [r] to restart')
+            img = fonts['basic'].get_surf(f'This\'ll be a bit tricky...')
             self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
 
