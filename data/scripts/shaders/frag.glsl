@@ -47,17 +47,21 @@ void main() {
         f_color.b = caSample3;
     }
 
-    // Water
-    if (distance(f_color.rgb, vec3(0.353, 0.259, 0.663)) < 0.05) {
+    // Lava
+    if (distance(f_color.rgb, vec3(1.000, 0.000, 0.000)) < 0.05) {
         float scroll = time * 0.00002;
         vec2 noise_uvs = floor(uvs * screenSize) / screenSize;
         vec2 flow_1 = noise_uvs + vec2(sin(scroll), cos(scroll));
         vec2 flow_2 = noise_uvs - vec2(cos(scroll), -sin(scroll));
 
         float noise = (texture(perlinNoise, flow_1 * 2.0).r + texture(perlinNoise, flow_2 * 2.0).r) * 0.5;
-        if (noise >= 0.43 && noise <= 0.57) {
-            f_color.rgb = vec3(0.369, 0.443, 0.722);
-        }
+        if (noise >= 0.45 && noise <= 0.55) {
+            f_color.rgb = vec3(1.000, 0.992, 0.796);
+        } else if (noise <= 0.4) {
+            f_color.rgb = vec3(0.745, 0.114, 0.278);
+        } else {
+            f_color.rgb = vec3(1.00, 0.639, 0.247);
+        };
     }
 
     // Blurry shake

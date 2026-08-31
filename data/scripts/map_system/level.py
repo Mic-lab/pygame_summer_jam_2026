@@ -31,7 +31,7 @@ SOLID_TILE_MAPPINGS = [
     ("tile_15", {(0, -1), (0, 1), (-1, 0)})
 ]
 
-WATER_TILE_MAPPINGS = [
+LAVA_TILE_MAPPINGS = [
     ("tile_31", set()),
     ("tile_17", {(-1, 0)}),
     ("tile_18", {(0, 1)}),
@@ -49,7 +49,7 @@ WATER_TILE_MAPPINGS = [
     ("tile_30", {(0, 1), (1, 0), (-1, 0)})
 ]
 
-ANIMATED_WATER_TILES = {"tile_20", "tile_21", "tile_22", "tile_26", "tile_27", "tile_28", "tile_29"}
+ANIMATED_LAVA_TILES = {"tile_20", "tile_21", "tile_22", "tile_26", "tile_27", "tile_28", "tile_29"}
 
 def try_get_for_mapping(x:int, y:int, level:list[list]):
     try:
@@ -70,16 +70,16 @@ def map_solid_tile(x:int, y:int, level:list[list]):
 
     return tiles.Tile((x, y), "tile_00")
 
-def map_water_tile(x:int, y:int, level:list[list]):
+def map_lava_tile(x:int, y:int, level:list[list]):
     neighbours = set()
     for x_offset, y_offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
         tile = try_get_for_mapping(x + x_offset, y + y_offset, level)
         if tile != "w" and tile != None:
             neighbours.add((x_offset, y_offset))
 
-    for tile_name, neighbour_map in WATER_TILE_MAPPINGS:
+    for tile_name, neighbour_map in LAVA_TILE_MAPPINGS:
         if neighbour_map == neighbours:
-            if tile_name in ANIMATED_WATER_TILES:
+            if tile_name in ANIMATED_LAVA_TILES:
                 return tiles.Tile((x, y), tile_name, "idle")
             else:
                 return tiles.Tile((x, y), tile_name)
@@ -357,7 +357,7 @@ class Level:
                     if c == "0":
                         solid_tiles.append((x, y))
                     elif c == "w":
-                        bg_tiles[(x, y)] = map_water_tile(x, y, level)
+                        bg_tiles[(x, y)] = map_lava_tile(x, y, level)
                     elif c == ' ':
                         continue
                     else:
