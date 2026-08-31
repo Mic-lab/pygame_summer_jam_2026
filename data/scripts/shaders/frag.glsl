@@ -70,8 +70,13 @@ void main() {
 
     int bloom = 0;
     float dist = 0;
+    float nx = texture(perlinNoise, uvs+vec2(time*0.00001)).r;
+    float ny = texture(perlinNoise, uvs*3+vec2(time*0.000015)).r;
     for (float i = 0.; i < 5.; i += 0.25) {
-        if (distance(texture(canvasTex, uvs + vec2(0, i/100)).rgb, vec3(1.000, 0.000, 0.000)) < 0.05) {
+        vec2 offset = vec2(
+                mix(-0.005, 0.005, nx),
+                mix(0, 0.04, ny));
+        if (distance(texture(canvasTex, uvs + vec2(0, i/100)+offset).rgb, vec3(1.000, 0.000, 0.000)) < 0.05) {
             dist = i;
             bloom = 1;
             break;
