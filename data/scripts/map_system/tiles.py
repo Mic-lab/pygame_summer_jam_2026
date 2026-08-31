@@ -1,20 +1,19 @@
 from ..entity import Entity
 from ..config import TILE_SIZE
 from ..timer import Timer
+from ..particle import ParticleGenerator
 from pygame import Vector2 as Vec2
 import random
 import pygame
 
-def vector_to_key(vec):
-    return (int(vec[0]), int(vec[1]))
-
 class Tile(Entity):
 
-    def __init__(self, grid_pos, name, action=None, collides=True):
+    def __init__(self, grid_pos, name, action=None, collides=True, allow_stretch=True):
         self.grid_pos = grid_pos
         pos = grid_pos[0]*TILE_SIZE[0], grid_pos[1]*TILE_SIZE[1]
         super().__init__(pos, name, action)
         self.collides = collides
+        self.allow_stretch = allow_stretch
         self.stepped_on = False
         self.stretch = Vec2(0)
         self.stretch_vel = Vec2(0)
@@ -30,6 +29,7 @@ class Tile(Entity):
     @property
     def img(self):
         base_img = super().img
+        if not self.allow_stretch: return base_img
         ratio = [
                 (1+abs(self.stretch[0])),
                 (1+abs(self.stretch[1]))
@@ -64,11 +64,23 @@ class Tile(Entity):
         Returns True if fg_tiles can move to my pos"""
         return False
 
+    def on_move_collision(self, level, moving_tiles, desired_grid_pos):
+        """When several tiles want to move to the same spot."""
+        return False
+
+    def on_place_collision(self, level, blocking_tile):
+        """When I am request to be placed on a tile that already has a fg_tile
+        Return True if I still get placed."""
+        return False
+
     def on_stepped(self, level, blocking_tile):
         self.stepped_on = True
 
     def on_stepped_released(self, level):
         self.stepped_on = False
+
+    def on_removal(self, level):
+        level.request_fg_delete(self.grid_pos)
 
 class RotatedTile(Tile):
 
@@ -123,14 +135,14 @@ class Slime(Tile):
                         move_direction = looped_direction
                         break
 
-
                 elif game.inputs['pressed'].get(k):
                     move_direction = looped_direction
                     break
 
         if move_direction:
+            level.notify_player_moved()
             desired_pos = Vec2(self.grid_pos) + move_direction
-            level.request_fg_move(vector_to_key(self.grid_pos), vector_to_key(desired_pos))
+            level.request_fg_move(self.grid_pos, desired_pos)
 
         self.move_timer.update()
     
@@ -141,7 +153,7 @@ class Slime(Tile):
             return False
         if self.weight > 1:
             return False
-        level.request_delete(self.grid_pos)
+        level.request_fg_delete(self.grid_pos)
         level.request_swap(blocking_tile.grid_pos, Slime.init_heavy_slime(*blocking_tile.grid_pos))
         return True  # Give permission for the guy behind me to go
 
@@ -164,9 +176,25 @@ class PressurePlate(Tile):
 
 class Arrow(Tile):
     pass
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, allow_stretch=False)  # Arrow looks bad when it gets stretched
     
-    # def update(self, game):
-    #     super().update(game)
+    def update(self, game):
+        super().update(game)
+        level = game.game_map.level
+        if level.player_moved:
+            level.request_fg_move(self.grid_pos, self.grid_pos+Vec2(1,0))
+            # import pprint
+            # pprint.pprint(level.fg_tiles)
+
+    def on_move_collision(self, level, moving_tiles, desired_grid_pos):
+        for moving_tile in moving_tiles:
+            print(moving_tile)
+            level.fg_tiles[moving_tile].on_removal(level)
+            gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(desired_grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
+            level.particle_gens.append(gen)
+        return True
 
 class Bow(Tile):
 
@@ -179,15 +207,22 @@ class Bow(Tile):
         self.charged = True
         self.animation.set_action('charging', reset=True)
 
+    def shoot(self, level):
+        arrow_grid_pos = self.grid_pos+self.shoot_direction
+        print('spawning arrow')
+        arrow = Arrow(arrow_grid_pos, 'arrow', action='idle')
+        level.request_fg_place(arrow, arrow_grid_pos)
+        self.charged = False
+        self.animation.set_action('shoot')
+
     def update(self, game):
         animation_done = super().update
         level = game.game_map.level
         if animation_done and self.animation.action == 'charging':
             self.animation.set_action('charged')
 
-        if self.charged:
-            arrow_grid_pos = self.grid_pos+self.shoot_direction
-            arrow = Arrow(arrow_grid_pos, 'arrow', action='idle')
-            level.request_fg_place(arrow, vector_to_key(arrow_grid_pos))
-            self.charged = False
-            # TODO: Make level store player moved variable and use that to update arrow and Bow
+        if level.player_moved:
+            if self.charged:
+                self.shoot(level)
+            else:
+                self.charge()

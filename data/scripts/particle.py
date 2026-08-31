@@ -2,6 +2,7 @@ import random
 from .timer import Timer
 from .entity import PhysicsEntity
 from . import utils
+from . import colors
 from copy import deepcopy
 import pygame
 from pygame import Vector2
@@ -53,9 +54,9 @@ class ParticleGenerator:
 
     TEMPLATES = {
         'smoke': {
-            'base_particle': lambda: Particle(action='basic', vel=(0, 0)),
+            'base_particle': lambda: Particle(action='basic', vel=(0, 0), color=colors.WHITE),
             'vel_randomness': 0.5,
-            'rate': 10
+            'rate': 3
         },
         'angle test': {
             'base_particle': lambda: Particle(action='arrow', vel=(0, -2), acceleration=(0, 0.05), angled=True, color=(50, 100, 240)),
@@ -119,9 +120,9 @@ class ParticleGenerator:
             return True
         if not self.timer.done: self.timer.update()
 
-    def render(self, surf):
+    def render(self, surf, offset=(0, 0)):
         for particle in self.particles:
-            particle.render(surf)
+            particle.render(surf, offset=offset)
 
     @staticmethod
     def update_generators(generators):

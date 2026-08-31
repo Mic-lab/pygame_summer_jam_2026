@@ -9,6 +9,7 @@ from ..font import fonts
 from .. import sfx
 from ..animation import Animation
 from ..mgl import shader_handler
+from ..particle import ParticleGenerator
 import random
 
 SOLID_TILES = {"0", "1"}
@@ -92,6 +93,7 @@ class Level:
     TILE_MAP = {
             '.': lambda x, y: tiles.RotatedTile((x, y), 'tile_00', collides=False),
             's': lambda x, y: tiles.Slime.init_regular_slime(x, y),
+            'S': lambda x, y: tiles.Slime.init_heavy_slime(x, y),
             'p': lambda x, y: tiles.PressurePlate((x, y)),
             "#": lambda x, y: tiles.Tile((x, y), "tile_33", collides=False),
             "@": lambda x, y: tiles.RotatedTile((x, y), "tile_32", collides=False),
@@ -100,12 +102,13 @@ class Level:
             "b": lambda x, y: tiles.Bow((x, y), "bow"),
             }
 
-    FG_TILES = ('s')
+    FG_TILES = ('s', 'S')
 
     def __init__(self, level_name):
         self.level_name = level_name
         self.bg_tiles, self.fg_tiles, self.level_size = self.load_level(level_name)
         self.offset = 0.5*(Vec2(config.GAME_SIZE) - (config.TILE_SIZE[0]*self.level_size[0], config.TILE_SIZE[1]*self.level_size[1]))
+        self.particle_gens = []
         self.surfs = []
 
         self.win = False
@@ -114,6 +117,7 @@ class Level:
         self.current_to_desired_requests = {}
         self.delete_requests = set()
         self.fg_place_requests = {}
+        self.player_moved = False
 
         self.added_surf = False
         self.pressed_pressure_plate = False
@@ -136,29 +140,50 @@ class Level:
         if intensity > self._screen_shake:
             self._screen_shake = intensity
 
+    @staticmethod
+    def vector_to_key(vec):
+        return (int(vec[0]), int(vec[1]))
+
     def request_fg_move(self, current_pos, desired_pos):
-        desired_pos, current_pos = tuple(desired_pos), tuple(current_pos)
+        desired_pos, current_pos = self.vector_to_key(desired_pos), self.vector_to_key(current_pos)
         self.desired_to_current_requests.setdefault(desired_pos, [])
         self.desired_to_current_requests[desired_pos].append(current_pos)
         self.current_to_desired_requests[current_pos] = desired_pos
 
     def request_fg_place(self, tile, grid_pos):
+        grid_pos = self.vector_to_key(grid_pos)
         self.fg_place_requests.setdefault(grid_pos, [])
         self.fg_place_requests[grid_pos].append(tile)
 
-    def request_delete(self, current_pos):
+    def request_fg_delete(self, current_pos):
+        current_pos = self.vector_to_key(current_pos)
         self.delete_requests.add(current_pos)
 
     def request_swap(self, swapped_pos, new_tile):
         # NOTE: Swap happens after resolve_movement_requests
+        swapped_pos  = self.vector_to_key(swapped_pos)
         self.fg_tiles[swapped_pos] = new_tile
+
+    def notify_player_moved(self):
+        self.player_moved = True
 
     def add_surf(self, surf, pos, center_x=False, speed=1):
         pos = list(pos)
         pos[0] = 0.5*config.GAME_SIZE[0]-surf.get_width()*0.5
         self.surfs.append([surf, pos, 0, speed])
 
+    def get_player_tiles(self):
+        # NOTE: Can be optimized
+        return [tile for tile in self.fg_tiles.values() if isinstance(tile, tiles.Slime)]
+            
     def update(self, game):
+        self.player_moved = False
+
+        # Player must be updated before other tiles that way they know if
+        # player moved
+        player_tiles = self.get_player_tiles()
+        for player_tile in player_tiles:
+            player_tile.update(game)
 
         win = True
         for tile_coord, tile in self.bg_tiles.items():
@@ -178,6 +203,9 @@ class Level:
             if not self.win:
                 self.commence_win()
 
+        for tile in self.fg_tiles.values():
+            if tile in player_tiles: continue
+            tile.update(game)
 
         # Handle dialogue ---------------------- #
         if self.pressed_pressure_plate and self.level_name == 'tutorial_0' and not self.added_surf:
@@ -194,12 +222,11 @@ class Level:
             img = fonts['basic'].get_surf(f'This\'ll be a bit tricky...')
             self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
-
-        for tile in self.fg_tiles.values():
-            tile.update(game)
         # -------------------------------------- #
 
         self.handle_requests(game)
+
+        ParticleGenerator.update_generators(self.particle_gens)
 
         self._screen_shake *= 0.9
         if self._screen_shake < 0.3: self._screen_shake = 0
@@ -230,20 +257,21 @@ class Level:
         # NOTE: Can be optimized by keeping track of the tiles that I went through
         tile = self.fg_tiles[current_pos]
 
-        # Found a loop. NOTE: not all loops are bad.
-        # Acceptable loop: 
+        # Found a loop.
+        # Head to head loops are specifically later in the function, so they will never happen:
+        # o -> <- o
+        # Example of other detected loops: 
         # o -> o
         # ^    v
         # o <- o
-        # Bad loop:
-        # o -> <- o
-        # These will probably never happen so not gonna bother checking if it's resolvable or not.
-        # Just return False to be safe.
+        # The tiles won't be able to move if this happens to be safe
         if current_pos in visited: return False
         visited.add(current_pos)
 
         # Multiple fg tiles want to move to the same tile
-        if len(self.desired_to_current_requests[desired_pos]) != 1: return False
+        moving_tiles = self.desired_to_current_requests[desired_pos]
+        if len(moving_tiles) != 1:
+            return tile.on_move_collision(self, moving_tiles, desired_pos)
 
         # There's a bg tile on where I want to go
         blocking_bg_tile = self.bg_tiles.get(desired_pos)
@@ -283,11 +311,12 @@ class Level:
             if len(tiles) > 1: continue
             placed_tile = tiles[0]
             if blocking_tile := self.fg_tiles.get(place_pos):
-                replace_blocking_tile = placed_tile.on_place_collision(self)
+                replace_blocking_tile = placed_tile.on_place_collision(self, blocking_tile)
                 if replace_blocking_tile:
                     self.fg_tiles[place_pos] = placed_tile
             else:
                 self.fg_tiles[place_pos] = placed_tile
+        self.fg_place_requests = {}
 
 
                 
@@ -390,6 +419,9 @@ class Level:
 
         for tile_pos, tile in self.fg_tiles.items():
             tile.render(surf, final_offset)
+
+        for gen in self.particle_gens:
+            gen.render(surf, offset=final_offset)
 
         for surf_data in self.surfs:
             looped_surf, pos, alpha, speed = surf_data

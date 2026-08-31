@@ -54,17 +54,8 @@
     "duration": 100
    },
    {
-    "filename": "basic",
-    "frame": { "x": 72, "y": 0, "w": 12, "h": 10 },
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
-    "sourceSize": { "w": 32, "h": 32 },
-    "duration": 100
-   },
-   {
     "filename": "arrow",
-    "frame": { "x": 0, "y": 10, "w": 12, "h": 10 },
+    "frame": { "x": 72, "y": 0, "w": 12, "h": 10 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
@@ -73,7 +64,7 @@
    },
    {
     "filename": "arrow",
-    "frame": { "x": 12, "y": 10, "w": 12, "h": 10 },
+    "frame": { "x": 84, "y": 0, "w": 12, "h": 10 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
@@ -82,7 +73,7 @@
    },
    {
     "filename": "arrow",
-    "frame": { "x": 24, "y": 10, "w": 12, "h": 10 },
+    "frame": { "x": 96, "y": 0, "w": 12, "h": 10 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
@@ -91,7 +82,7 @@
    },
    {
     "filename": "arrow",
-    "frame": { "x": 36, "y": 10, "w": 12, "h": 10 },
+    "frame": { "x": 108, "y": 0, "w": 12, "h": 10 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
@@ -100,7 +91,7 @@
    },
    {
     "filename": "group",
-    "frame": { "x": 0, "y": 20, "w": 12, "h": 10 },
+    "frame": { "x": 120, "y": 0, "w": 12, "h": 10 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
@@ -109,7 +100,7 @@
    },
    {
     "filename": "group",
-    "frame": { "x": 12, "y": 20, "w": 12, "h": 10 },
+    "frame": { "x": 132, "y": 0, "w": 12, "h": 10 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
@@ -118,7 +109,7 @@
    },
    {
     "filename": "group",
-    "frame": { "x": 24, "y": 20, "w": 12, "h": 10 },
+    "frame": { "x": 144, "y": 0, "w": 12, "h": 10 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
@@ -127,7 +118,7 @@
    },
    {
     "filename": "group",
-    "frame": { "x": 36, "y": 20, "w": 12, "h": 10 },
+    "frame": { "x": 156, "y": 0, "w": 12, "h": 10 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
@@ -136,7 +127,7 @@
    },
    {
     "filename": "group",
-    "frame": { "x": 48, "y": 20, "w": 12, "h": 10 },
+    "frame": { "x": 168, "y": 0, "w": 12, "h": 10 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
@@ -145,7 +136,7 @@
    },
    {
     "filename": "group",
-    "frame": { "x": 60, "y": 20, "w": 12, "h": 10 },
+    "frame": { "x": 180, "y": 0, "w": 12, "h": 10 },
     "rotated": false,
     "trimmed": true,
     "spriteSourceSize": { "x": 10, "y": 12, "w": 12, "h": 10 },
@@ -158,13 +149,8 @@
   "version": "1.x-dev",
   "image": "particles.png",
   "format": "RGBA8888",
-  "size": { "w": 84, "h": 30 },
+  "size": { "w": 192, "h": 10 },
   "scale": "1",
-  "frameTags": [
-   { "name": "basic", "from": 0, "to": 6, "direction": "forward" },
-   { "name": "arrow", "from": 7, "to": 10, "direction": "forward" },
-   { "name": "group", "from": 11, "to": 16, "direction": "forward" }
-  ],
   "slices": [
   ]
  }
