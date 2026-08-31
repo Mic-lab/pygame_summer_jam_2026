@@ -4,6 +4,7 @@ uniform sampler2D canvasTex;
 uniform sampler2D perlinNoise;
 uniform float time;
 uniform float transitionTimer = -1.0;
+uniform float levelTransitionTimer = -1.0;
 uniform int transitionState = 0;
 uniform float shakeTimer = -1.0;
 uniform float caTimer = -1.0;
@@ -105,6 +106,13 @@ void main() {
         gray.b*=intensity*3;
         f_color.rgb = mix(f_color.rgb, gray, (min(1.4*intensity, 1)));
         f_color *= 1-intensity;
+    }
+
+    // Level Transition Timer
+    if (levelTransitionTimer > 0) {
+        vec3 black = vec3(5, 0, 39)/255;
+        float intensity = linearEase(levelTransitionTimer);
+        f_color.rgb = mix(f_color.rgb, black, intensity);
     }
 
     // Vignette + color filters

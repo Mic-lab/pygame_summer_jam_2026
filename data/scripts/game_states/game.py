@@ -3,7 +3,7 @@ import pygame
 import copy
 from pygame import Vector2 as Vec2
 from pathlib import Path
-
+from ..timer import Timer
 from .. import config
 from .. import sfx
 from .state import State
@@ -28,16 +28,26 @@ class GameMap:
 
     def __init__(self):
         self.level_index = 0
+        self.transition_timer = Timer(20, done=True)
 
     def load_level(self, level_name):
         self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')
         self.level = Level(level_name)
 
     def update(self, game):
-        if game.inputs['pressed'].get('return'):
-            self.level_index += 1
-            self.load_level(self.LEVEL_NAMES[self.level_index])
-        self.level.update(game)
+        if self.transition_timer.done:
+            if game.inputs['pressed'].get('return'):
+                self.transition_timer.reset()
+                self.completed_transition = False
+            self.level.update(game)
+        else:
+            if self.transition_timer.ratio >= 0.5 and not self.completed_transition:
+                self.level_index += 1
+                self.load_level(self.LEVEL_NAMES[self.level_index])
+                self.completed_transition = True
+
+            shader_handler.vars['levelTransitionTimer'] = self.transition_timer.ratio
+            self.transition_timer.update()
 
     def render(self, surf):
         surf.blit(self.text_surf, Vec2(0.5*config.GAME_SIZE[0], 4) - (0.5*self.text_surf.get_width(), 0))
