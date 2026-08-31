@@ -13,7 +13,7 @@ from ..entity import Entity
 from .. import colors
 from ..mgl import shader_handler
 
-from ..map_system.level import Level
+from ..map_system.level import Level, BossLevel
 
 
 class GameMap:
@@ -24,6 +24,7 @@ class GameMap:
             'level_1',
             'level_2',
             'level_3',
+            'boss',
             )
 
     def __init__(self):
@@ -31,6 +32,8 @@ class GameMap:
         self.transition_timer = Timer(20, done=True)
 
     def load_level(self, level_name):
+        if level_name == 'boss':
+            self.level = BossLevel('boss')
         self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')
         self.level = Level(level_name)
 

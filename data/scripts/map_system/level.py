@@ -438,3 +438,7 @@ class Level:
             shader_handler.vars['caTimer'] = self.restart_timer.ratio*3
         else:
             shader_handler.vars['caTimer'] = 1-self.win_timer.ratio
+
+
+class BossLevel(Level):
+    pass
