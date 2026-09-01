@@ -12,7 +12,7 @@ from ..mgl import shader_handler
 from ..particle import ParticleGenerator
 import random
 
-SOLID_TILES = {"0", "1"}
+SOLID_TILES = {"0"}
 
 SOLID_TILE_MAPPINGS = [
     ("tile_16", set()),
@@ -70,8 +70,13 @@ CABLE_TILE_MAPPINGS = [
 
 ANIMATED_LAVA_TILES = {"tile_20", "tile_21", "tile_22", "tile_26", "tile_27", "tile_28", "tile_29"}
 
+def parse_spike_data(data:str):
+    data_elements = data.split("/")
+    return {"state":data_elements[0], "triggers":[(tuple(map(int, element.split(",")))) for element in data_elements[1:]]}
+
 LEVEL_DATA_PARSER_DISPATCH = {
-    "b": lambda x: Vec2(*map(int, x.split(",")))
+    "b": lambda x: Vec2(*map(int, x.split(","))),
+    "^": parse_spike_data
 }
 
 def try_get_for_mapping(x:int, y:int, level:list[list]):
@@ -137,7 +142,6 @@ class Level:
             'p': lambda x, y: tiles.PressurePlate((x, y)),
             "#": lambda x, y: tiles.Tile((x, y), "tile_33", collides=False),
             "@": lambda x, y: tiles.RotatedTile((x, y), "tile_32", collides=False),
-            "1": lambda x, y: tiles.Tile((x, y), "tile_34"),
             "f": lambda x, y: tiles.Tile((x, y), "pot", action='idle'),
             "b": lambda x, y: tiles.Bow((x, y), "bow"),
             }
@@ -407,7 +411,6 @@ class Level:
         self.current_to_desired_requests = {}
         self.desired_to_current_requests = {}
 
-
     def load_level(self, level_name):
         bg_tiles = {}
         fg_tiles = {}
@@ -457,6 +460,9 @@ class Level:
                         bg_tiles[(x, y)] = map_cable_tiles(x, y, level)
                     elif c == "b":
                         bg_tiles[(x, y)] = tiles.Bow((x, y), "bow", level_data[(x, y)])
+                    elif c == "^":
+                        data = level_data.get((x, y), {"state":"up", "triggers":[]})
+                        bg_tiles[(x, y)] = tiles.Spikes((x, y), data["state"], data["triggers"])
                     elif c == ' ':
                         continue
                     else:
