@@ -50,6 +50,24 @@ LAVA_TILE_MAPPINGS = [
     ("tile_30", {(0, 1), (1, 0), (-1, 0)})
 ]
 
+CABLE_TILE_MAPPINGS = [
+    ("tile_34", {(0, -1), (0, 1)}),
+    ("tile_34", {(0, -1)}),
+    ("tile_34", {(0, 1)}),
+    ("tile_35", {(1, 0), (-1, 0)}),
+    ("tile_35", {(1, 0)}),
+    ("tile_35", {(-1, 0)}),
+    ("tile_36", {(0, 1), (1, 0)}),
+    ("tile_37", {(0, -1), (1, 0)}),
+    ("tile_38", {(0, -1), (-1, 0)}),
+    ("tile_39", {(0, 1), (-1, 0)}),
+    ("tile_40", {(-1, 0), (1, 0), (0, 1)}),
+    ("tile_41", {(0, -1), (0, 1), (1, 0)}),
+    ("tile_42", {(-1, 0), (1, 0), (0, -1)}),
+    ("tile_43", {(0, -1), (0, 1), (-1, 0)}),
+    ("tile_44", {(0, 1), (0, -1), (1, 0), (-1, 0)})
+]
+
 ANIMATED_LAVA_TILES = {"tile_20", "tile_21", "tile_22", "tile_26", "tile_27", "tile_28", "tile_29"}
 
 def try_get_for_mapping(x:int, y:int, level:list[list]):
@@ -87,7 +105,16 @@ def map_lava_tile(x:int, y:int, level:list[list]):
 
     return tiles.Tile((x, y), "tile_00")
 
+def map_cable_tiles(x:int, y:int, level:list[list]):
+    neighbours = set()
+    for x_offset, y_offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        tile = try_get_for_mapping(x + x_offset, y + y_offset, level)
+        if tile == "=" and tile != None:
+            neighbours.add((x_offset, y_offset))
 
+    for tile_name, neighbour_map in CABLE_TILE_MAPPINGS:
+        if neighbour_map == neighbours:
+            return tiles.Tile((x, y), tile_name)
 
 class Level:
     TILE_MAP = {
@@ -387,6 +414,8 @@ class Level:
                         solid_tiles.append((x, y))
                     elif c == "w":
                         bg_tiles[(x, y)] = map_lava_tile(x, y, level)
+                    elif c == "=":
+                        bg_tiles[(x, y)] = map_cable_tiles(x, y, level)
                     elif c == ' ':
                         continue
                     else:
