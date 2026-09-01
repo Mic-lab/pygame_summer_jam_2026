@@ -20,10 +20,12 @@ class GameMap:
 
     LEVEL_NAMES = (
             'tutorial_0',
+            'tutorial_1',
             'level_0',
-            'level_1',
+            'island_level',
             'level_2',
             'level_3',
+            'bow_test',
             'boss',
             )
 
