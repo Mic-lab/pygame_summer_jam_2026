@@ -490,11 +490,13 @@ class Level:
         final_offset = self.offset + v
 
 
+        # NOTE: Fg tiles will always have a bg tile, so this will render all fg tiles
+        # Also, we must render top to bottom to make bottom elements go in front.
+        # In python 3.7+, dictionnary order is preserved as insertion order, so this should work
         for tile_pos, tile in self.bg_tiles.items():
             tile.render(surf, final_offset)
-
-        for tile_pos, tile in self.fg_tiles.items():
-            tile.render(surf, final_offset)
+            if fg_tile := self.fg_tiles.get(tile_pos):
+                fg_tile.render(surf, final_offset)
 
         for gen in self.particle_gens:
             gen.render(surf, offset=final_offset)

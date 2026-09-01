@@ -4,4 +4,6 @@
 
 DATA ENTRY TYPES:
 - bow (b): x,y -> the direction to shoot in
-- spikes (^): state/x,y/... -> the first entry is the default state, while subsequent entries are pressure plates (there is no type check for this) that must be stepped on to trigger the spikes
+- spikes (^): state/x,y/... -> the first entry is the default state, while
+  subsequent entries are pressure plates (there is no type check for this)
+  that must be stepped on to trigger the spikes

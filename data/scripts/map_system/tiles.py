@@ -43,7 +43,11 @@ class Tile(Entity):
 
     def render(self, surf, offset=(0, 0)):
         offset = pygame.Vector2(offset)
-        offset -= 0.5*(Vec2(self.img.get_size()) - super().img.get_size())
+        # To keep it centered when stretching
+        offset -= 0.5*(Vec2(self.img.get_size()) - super().img.get_size())  
+        # To render using the topleft of the rect
+        if self.animation.action is not None:
+            offset -= self.animation.rect.size
         return super().render(surf, offset)
 
     def update(self, game):
