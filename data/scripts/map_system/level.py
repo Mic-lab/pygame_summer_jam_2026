@@ -118,6 +118,7 @@ class Level:
         self.delete_requests = set()
         self.fg_place_requests = {}
         self.player_moved = False
+        self.played_sounds = set()
 
         self.added_surf = False
         self.pressed_pressure_plate = False
@@ -129,6 +130,7 @@ class Level:
         self._screen_shake = 0
 
     def commence_win(self):
+        sfx.sounds['level_complete.wav'].play()
         self.win = True
         self.win_timer.reset()
         self.shake_screen()
@@ -163,6 +165,12 @@ class Level:
         # NOTE: Swap happens after resolve_movement_requests
         swapped_pos  = self.vector_to_key(swapped_pos)
         self.fg_tiles[swapped_pos] = new_tile
+
+    def play_sound(self, sound_name, suffix=None):
+        if sound_name not in self.played_sounds:
+            self.played_sounds.add(sound_name)
+            if suffix: sound_name += suffix
+            sfx.sounds[sound_name].play()
 
     def notify_player_moved(self):
         self.player_moved = True
@@ -224,6 +232,7 @@ class Level:
             self.added_surf = True
         # -------------------------------------- #
 
+        self.played_sounds = set()
         self.handle_requests(game)
 
         ParticleGenerator.update_generators(self.particle_gens)

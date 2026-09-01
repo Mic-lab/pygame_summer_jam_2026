@@ -155,6 +155,7 @@ class Slime(Tile):
             return False
         level.request_fg_delete(self.grid_pos)
         level.request_swap(blocking_tile.grid_pos, Slime.init_heavy_slime(*blocking_tile.grid_pos))
+        level.play_sound(f'merge', f'_{random.randint(1, 3)}.wav')
         return True  # Give permission for the guy behind me to go
 
 class PressurePlate(Tile):
@@ -164,6 +165,8 @@ class PressurePlate(Tile):
 
     def on_stepped(self, level, tile):
         if tile.weight > 1:
+            if not self.stepped_on:
+                level.play_sound('pressure_plate', suffix=f'_{random.randint(1,3)}.wav')
             super().on_stepped(level, tile)
             self.animation.set_action('down')
         else:
@@ -190,7 +193,6 @@ class Arrow(Tile):
 
     def on_move_collision(self, level, moving_tiles, desired_grid_pos):
         for moving_tile in moving_tiles:
-            print(moving_tile)
             level.fg_tiles[moving_tile].on_removal(level)
             gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(desired_grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
             level.particle_gens.append(gen)
@@ -209,7 +211,6 @@ class Bow(Tile):
 
     def shoot(self, level):
         arrow_grid_pos = self.grid_pos+self.shoot_direction
-        print('spawning arrow')
         arrow = Arrow(arrow_grid_pos, 'arrow', action='idle')
         level.request_fg_place(arrow, arrow_grid_pos)
         self.charged = False
