@@ -1,0 +1,49 @@
+{ "frames": [
+   {
+    "filename": "flying",
+    "frame": { "x": 0, "y": 0, "w": 102, "h": 77 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 6, "y": 17, "w": 102, "h": 77 },
+    "sourceSize": { "w": 124, "h": 124 },
+    "duration": 200
+   },
+   {
+    "filename": "flying",
+    "frame": { "x": 102, "y": 0, "w": 102, "h": 77 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 6, "y": 17, "w": 102, "h": 77 },
+    "sourceSize": { "w": 124, "h": 124 },
+    "duration": 100
+   },
+   {
+    "filename": "flying",
+    "frame": { "x": 204, "y": 0, "w": 102, "h": 77 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 6, "y": 17, "w": 102, "h": 77 },
+    "sourceSize": { "w": 124, "h": 124 },
+    "duration": 200
+   },
+   {
+    "filename": "flying",
+    "frame": { "x": 306, "y": 0, "w": 102, "h": 77 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 6, "y": 17, "w": 102, "h": 77 },
+    "sourceSize": { "w": 124, "h": 124 },
+    "duration": 100
+   }
+ ],
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.x-dev",
+  "image": "boss.png",
+  "format": "RGBA8888",
+  "size": { "w": 408, "h": 77 },
+  "scale": "1",
+  "slices": [
+  ]
+ }
+}

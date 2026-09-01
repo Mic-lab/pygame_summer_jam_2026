@@ -19,6 +19,7 @@ from ..map_system.level import Level, BossLevel
 class GameMap:
 
     LEVEL_NAMES = (
+            'boss',
             'bow_test',
 
             'tutorial_0',
@@ -27,7 +28,6 @@ class GameMap:
             'island_level',
             'level_2',
             'level_3',
-            'boss',
             )
 
     def __init__(self):
@@ -40,8 +40,10 @@ class GameMap:
     def load_level(self, level_name):
         if level_name == 'boss':
             self.level = BossLevel('boss')
-        self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')
-        self.level = Level(level_name)
+            self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')
+        else:
+            self.level = Level(level_name)
+            self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')
 
     def update(self, game):
         if self.transition_timer.done:

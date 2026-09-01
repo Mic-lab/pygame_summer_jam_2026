@@ -270,6 +270,9 @@ class Arrow(Tile):
         level.particle_gens.append(gen)
         return True
 
+    def on_place_collision(self, level, blocking_tile):
+        return self.on_contact(level, blocking_tile)
+
 class Bow(Tile):
 
     def __init__(self, grid_pos, name, shoot_direction):
