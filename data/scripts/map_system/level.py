@@ -50,7 +50,29 @@ LAVA_TILE_MAPPINGS = [
     ("tile_30", {(0, 1), (1, 0), (-1, 0)})
 ]
 
+CABLE_TILE_MAPPINGS = [
+    ("tile_34", {(0, -1), (0, 1)}),
+    ("tile_34", {(0, -1)}),
+    ("tile_34", {(0, 1)}),
+    ("tile_35", {(1, 0), (-1, 0)}),
+    ("tile_35", {(1, 0)}),
+    ("tile_35", {(-1, 0)}),
+    ("tile_36", {(0, 1), (1, 0)}),
+    ("tile_37", {(0, -1), (1, 0)}),
+    ("tile_38", {(0, -1), (-1, 0)}),
+    ("tile_39", {(0, 1), (-1, 0)}),
+    ("tile_40", {(-1, 0), (1, 0), (0, 1)}),
+    ("tile_41", {(0, -1), (0, 1), (1, 0)}),
+    ("tile_42", {(-1, 0), (1, 0), (0, -1)}),
+    ("tile_43", {(0, -1), (0, 1), (-1, 0)}),
+    ("tile_44", {(0, 1), (0, -1), (1, 0), (-1, 0)})
+]
+
 ANIMATED_LAVA_TILES = {"tile_20", "tile_21", "tile_22", "tile_26", "tile_27", "tile_28", "tile_29"}
+
+LEVEL_DATA_PARSER_DISPATCH = {
+    "b": lambda x: Vec2(*map(int, x.split(",")))
+}
 
 def try_get_for_mapping(x:int, y:int, level:list[list]):
     try:
@@ -87,7 +109,25 @@ def map_lava_tile(x:int, y:int, level:list[list]):
 
     return tiles.Tile((x, y), "tile_00")
 
+def map_cable_tiles(x:int, y:int, level:list[list]):
+    neighbours = set()
+    for x_offset, y_offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        tile = try_get_for_mapping(x + x_offset, y + y_offset, level)
+        if tile == "=" and tile != None:
+            neighbours.add((x_offset, y_offset))
 
+    for tile_name, neighbour_map in CABLE_TILE_MAPPINGS:
+        if neighbour_map == neighbours:
+            return tiles.Tile((x, y), tile_name)
+
+def parse_level_data(data_file_contents:str):
+    parsed_data = {}
+    for line in data_file_contents.splitlines():
+        if not line:
+            continue
+        target_tile, data_type, data = line.split(">>")
+        parsed_data[tuple(map(int, target_tile.split(",")))] = LEVEL_DATA_PARSER_DISPATCH[data_type](data)
+    return parsed_data
 
 class Level:
     TILE_MAP = {
@@ -221,13 +261,18 @@ class Level:
             self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
 
+        elif self.level_name == "tutorial_1" and not self.added_surf:
+            img = fonts['basic'].get_surf(f'This\'ll be a bit diffuclt...')
+            self.add_surf(img, (0, 40), center_x=True)
+            self.added_surf = True
+
         elif self.level_name == "level_0" and not self.added_surf:
-            img = fonts['basic'].get_surf(f'Two pressure plates now?\n Make sure to hold [r] to restart!')
+            img = fonts['basic'].get_surf(f'Hold [r] to restart.')
             self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
 
         elif self.level_name == "level_3" and not self.added_surf:
-            img = fonts['basic'].get_surf(f'This\'ll be a bit tricky...')
+            img = fonts['basic'].get_surf(f'Good luck!')
             self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
         # -------------------------------------- #
@@ -368,11 +413,18 @@ class Level:
         fg_tiles = {}
 
         with open(Path(f'data/levels/{level_name}.txt')) as f:
-            file_content = f.read()
+            level_file_content = f.read()
+        
+        level_data_path = Path(f"data/levels/{level_name}_data.txt")
+        if level_data_path.exists():
+            with open(level_data_path) as f:
+                level_data = parse_level_data(f.read())
+        else:
+            level_data = {}
 
         # Simple level layout used for autotiling
         level = []
-        for line in file_content.split("\n"):
+        for line in level_file_content.split("\n"):
             if line:
                 line_list = []
                 while " " in line_list:
@@ -401,6 +453,10 @@ class Level:
                         solid_tiles.append((x, y))
                     elif c == "w":
                         bg_tiles[(x, y)] = map_lava_tile(x, y, level)
+                    elif c == "=":
+                        bg_tiles[(x, y)] = map_cable_tiles(x, y, level)
+                    elif c == "b":
+                        bg_tiles[(x, y)] = tiles.Bow((x, y), "bow", level_data[(x, y)])
                     elif c == ' ':
                         continue
                     else:

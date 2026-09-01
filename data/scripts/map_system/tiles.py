@@ -200,9 +200,9 @@ class Arrow(Tile):
 
 class Bow(Tile):
 
-    def __init__(self, grid_pos, name):
+    def __init__(self, grid_pos, name, shoot_direction):
         super().__init__(grid_pos, name, action='charging')
-        self.shoot_direction = Vec2(1, 0)
+        self.shoot_direction = shoot_direction
         self.charge()
 
     def charge(self):
