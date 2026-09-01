@@ -210,6 +210,11 @@ class Level:
         swapped_pos  = self.vector_to_key(swapped_pos)
         self.fg_tiles[swapped_pos] = new_tile
 
+    def request_bg_set(self, current_pos, tile):
+        current_pos = self.vector_to_key(current_pos)
+        self.bg_tiles[current_pos] = tile
+        # self.bg_tiles[current_pos] = self.TILE_MAP['.'](*current_pos)
+
     def play_sound(self, sound_name, suffix=None):
         if sound_name not in self.played_sounds:
             self.played_sounds.add(sound_name)
@@ -334,7 +339,7 @@ class Level:
         # There's a bg tile on where I want to go
         blocking_bg_tile = self.bg_tiles.get(desired_pos)
         if blocking_bg_tile.collides:
-            return False
+            return tile.on_bg_contact(self, blocking_bg_tile)
 
         # There's a fg tile on where I want to go
         if blocking_fg_tile := self.fg_tiles.get(desired_pos):
@@ -403,9 +408,8 @@ class Level:
             placed_tile.grid_pos = desired_pos
             # placed_tile.real_pos = (placed_tile.grid_pos[0]*config.TILE_SIZE[0], placed_tile.grid_pos[1]*config.TILE_SIZE[1])
             self.fg_tiles[desired_pos] = placed_tile
-            slime_moved = True
 
-        if slime_moved:
+        if self.player_moved:
             sfx.sounds[f'step{random.randint(1, 5)}.wav'].play()
 
         self.current_to_desired_requests = {}
@@ -489,14 +493,11 @@ class Level:
         v = pygame.Vector2(self._screen_shake).rotate(random.randint(0, 359))
         final_offset = self.offset + v
 
-
-        # NOTE: Fg tiles will always have a bg tile, so this will render all fg tiles
-        # Also, we must render top to bottom to make bottom elements go in front.
-        # In python 3.7+, dictionnary order is preserved as insertion order, so this should work
         for tile_pos, tile in self.bg_tiles.items():
             tile.render(surf, final_offset)
-            if fg_tile := self.fg_tiles.get(tile_pos):
-                fg_tile.render(surf, final_offset)
+
+        for tile_pos, tile in sorted(self.fg_tiles.items()):
+            tile.render(surf, final_offset)
 
         for gen in self.particle_gens:
             gen.render(surf, offset=final_offset)

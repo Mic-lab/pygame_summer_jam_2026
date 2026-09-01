@@ -54,9 +54,9 @@ class ParticleGenerator:
 
     TEMPLATES = {
         'smoke': {
-            'base_particle': lambda: Particle(action='basic', vel=(0, 0), color=colors.WHITE),
-            'vel_randomness': 0.5,
-            'rate': 3
+            'base_particle': lambda: Particle(action='basic', vel=(0, -1), color=colors.WHITE),
+            'vel_randomness': 0.8,
+            'rate': 6
         },
         'angle test': {
             'base_particle': lambda: Particle(action='arrow', vel=(0, -2), acceleration=(0, 0.05), angled=True, color=(50, 100, 240)),

@@ -134,6 +134,7 @@
   "size": { "w": 336, "h": 24 },
   "scale": "1",
   "slices": [
+   { "name": "rect", "color": "#0000ffff", "keys": [{ "frame": 8, "bounds": {"x": 0, "y": 0, "w": 24, "h": 24 } }] }
   ]
  }
 }

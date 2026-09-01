@@ -17,6 +17,7 @@
   "size": { "w": 24, "h": 24 },
   "scale": "1",
   "slices": [
+   { "name": "rect", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 24, "h": 24 } }] }
   ]
  }
 }

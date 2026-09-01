@@ -53,7 +53,7 @@
   "size": { "w": 120, "h": 24 },
   "scale": "1",
   "slices": [
-   { "name": "Slice 1", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 1, "y": 4, "w": 23, "h": 17 } }] }
+   { "name": "rect", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 24, "h": 24 } }] }
   ]
  }
 }

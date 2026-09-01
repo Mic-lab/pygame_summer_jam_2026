@@ -6,6 +6,9 @@ from pygame import Vector2 as Vec2
 import random
 import pygame
 
+def vector_to_key(vec):
+    return (int(vec[0]), int(vec[1]))
+
 class Tile(Entity):
 
     def __init__(self, grid_pos, name, action=None, collides=True, allow_stretch=True):
@@ -45,9 +48,10 @@ class Tile(Entity):
         offset = pygame.Vector2(offset)
         # To keep it centered when stretching
         offset -= 0.5*(Vec2(self.img.get_size()) - super().img.get_size())  
-        # To render using the topleft of the rect
+        # To render using the topleft of the animation rect
         if self.animation.action is not None:
-            offset -= self.animation.rect.size
+            offset -= self.animation.rect.topleft
+        #     pygame.draw.rect(surf, (255, 0, 0), (self.rect[0]+offset[0], self.rect[1]+offset[1], *self.rect.size), width=1)
         return super().render(surf, offset)
 
     def update(self, game):
@@ -64,7 +68,12 @@ class Tile(Entity):
         return super().update()
 
     def on_contact(self, level, blocking_tile):
-        """When I move on a a tile that doesn\'t move.
+        """When I move on a fg tile that doesn\'t move.
+        Returns True if fg_tiles can move to my pos"""
+        return False
+
+    def on_bg_contact(self, level, blocking_tile):
+        """When I move on a bg tile that doesn\'t move.
         Returns True if fg_tiles can move to my pos"""
         return False
 
@@ -187,22 +196,48 @@ class Spikes(Tile):
         self.triggers = triggers
         self.original_action = action
 
+        self.first_update = False
+
     def update(self, game):
+        level = game.game_map.level
+
+        # On the first update, make sure the spike is stored in the right fg/bg
+        if not self.first_update:
+            self.first_update = True
+            self.set_action(level, self.animation.action, force=True)
+
         super().update(game)
 
-        level = game.game_map.level
         triggered = all([level.bg_tiles[trigger_tile].stepped_on for trigger_tile in self.triggers])
         if triggered:
             if self.animation.action == self.original_action:
                 if self.animation.action == "down":
-                    self.animation.set_action("up")
+                    self.set_action(level, 'up')
                 else:
-                    self.animation.set_action("down")
+                    self.set_action(level, 'down')
         else:
-            self.animation.set_action(self.original_action)
+            self.set_action(level, self.original_action)
+
+    def set_action(self, level, action, force=False):
+        if self.animation.action == action and not force: return
+        self.animation.set_action(action)
+        if action == 'up':
+            # Place spike on fg with a ground bg tile
+            level.request_bg_set(self.grid_pos, Tile(self.grid_pos, 'tile_00'))
+            level.request_fg_place(self, self.grid_pos)
+        elif action == 'down':
+            # Delete spike from fg and set bg to the spike
+            level.request_fg_delete(self.grid_pos)
+            level.request_bg_set(self.grid_pos, self)
+
+    def on_place_collision(self, level, blocking_tile):
+        # When a slime stops the spike from rising up
+        level.particle_gens.append(
+                ParticleGenerator.from_template(self.rect.center, 'smoke')
+                )
+        return True  # Replace the slime with the spike
 
 class Arrow(Tile):
-    pass
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs, allow_stretch=False)  # Arrow looks bad when it gets stretched
@@ -220,6 +255,19 @@ class Arrow(Tile):
             level.fg_tiles[moving_tile].on_removal(level)
             gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(desired_grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
             level.particle_gens.append(gen)
+        return True
+
+    def on_contact(self, level, blocking_tile):
+        if isinstance(blocking_tile, Slime):
+            level.fg_tiles[vector_to_key(blocking_tile.grid_pos)].on_removal(level)
+            gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(blocking_tile.grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
+            level.particle_gens.append(gen)
+        return True
+
+    def on_bg_contact(self, level, blocking_tile):
+        level.fg_tiles[vector_to_key(self.grid_pos)].on_removal(level)
+        gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
+        level.particle_gens.append(gen)
         return True
 
 class Bow(Tile):
