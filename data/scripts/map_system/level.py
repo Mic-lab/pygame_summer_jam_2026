@@ -93,7 +93,7 @@ class Level:
     TILE_MAP = {
             '.': lambda x, y: tiles.RotatedTile((x, y), 'tile_00', collides=False),
             's': lambda x, y: tiles.Slime.init_regular_slime(x, y),
-            'S': lambda x, y: tiles.Slime.init_heavy_slime(x, y),
+            'z': lambda x, y: tiles.Slime.init_heavy_slime(x, y),
             'p': lambda x, y: tiles.PressurePlate((x, y)),
             "#": lambda x, y: tiles.Tile((x, y), "tile_33", collides=False),
             "@": lambda x, y: tiles.RotatedTile((x, y), "tile_32", collides=False),
@@ -102,7 +102,7 @@ class Level:
             "b": lambda x, y: tiles.Bow((x, y), "bow"),
             }
 
-    FG_TILES = ('s', 'S')
+    FG_TILES = ('s', 'z')
 
     def __init__(self, level_name):
         self.level_name = level_name
@@ -218,7 +218,7 @@ class Level:
             self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
 
-        elif self.level_name == "level_1" and not self.added_surf:
+        elif self.level_name == "level_3" and not self.added_surf:
             img = fonts['basic'].get_surf(f'This\'ll be a bit tricky...')
             self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
@@ -377,11 +377,16 @@ class Level:
         for y, row in enumerate(level):
             if y > max_y: max_y = y
             for x, c in enumerate(row):
+                og_c = c
+                c = c.lower()
                 if x > max_x: max_x = x
                 if c in Level.FG_TILES:
                     tile = Level.TILE_MAP[c](x, y)
                     fg_tiles[(x, y)] = tile
-                    bg_tiles[(x, y)] = Level.TILE_MAP['.'](x, y)
+                    if og_c == c:
+                        bg_tiles[(x, y)] = Level.TILE_MAP['.'](x, y)
+                    else:
+                        bg_tiles[(x, y)] = Level.TILE_MAP['@'](x, y)
                 else:
                     if c == "0":
                         solid_tiles.append((x, y))
