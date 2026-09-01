@@ -9,4 +9,6 @@ Polish
 
 QOL
     / hold a button to move fast on hold
-    / Hold r to restart
+
+BUGS
+    - press enter banner should disappear when not all pressure plates are stepped on...

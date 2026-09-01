@@ -174,6 +174,26 @@ class PressurePlate(Tile):
         super().on_stepped_released(level)
         self.animation.set_action('up')
 
+class Spikes(Tile):
+    def __init__(self, pos, action, triggers):
+        super().__init__(pos, 'spikes', action=action, collides=False)
+        self.triggers = triggers
+        self.original_action = action
+
+    def update(self, game):
+        super().update(game)
+
+        level = game.game_map.level
+        triggered = all([level.bg_tiles[trigger_tile].stepped_on for trigger_tile in self.triggers])
+        if triggered:
+            if self.animation.action == self.original_action:
+                if self.animation.action == "down":
+                    self.animation.set_action("up")
+                else:
+                    self.animation.set_action("down")
+        else:
+            self.animation.set_action(self.original_action)
+
 class Arrow(Tile):
     pass
 
