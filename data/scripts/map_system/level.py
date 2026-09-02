@@ -124,7 +124,7 @@ def map_cable_tiles(x:int, y:int, level:list[list]):
 
     for tile_name, neighbour_map in CABLE_TILE_MAPPINGS:
         if neighbour_map == neighbours:
-            return tiles.Tile((x, y), tile_name)
+            return tiles.Tile((x, y), tile_name, collides=False)
 
 def parse_level_data(data_file_contents:str):
     parsed_data = {}
@@ -335,7 +335,7 @@ class Level:
         # Multiple fg tiles want to move to the same tile
         moving_tiles = self.desired_to_current_requests[desired_pos]
         if len(moving_tiles) != 1:
-            return tile.on_move_collision(self, moving_tiles, desired_pos)
+            return tile.on_fg_move_collision(self, moving_tiles, desired_pos)
 
         # There's a bg tile on where I want to go
         blocking_bg_tile = self.bg_tiles.get(desired_pos)
@@ -360,7 +360,7 @@ class Level:
                 if desired_pos in self.delete_requests:
                     return True
 
-                return tile.on_contact(self, blocking_fg_tile)
+                return tile.on_fg_contact(self, blocking_fg_tile)
 
         # Empty tile and no one wants to go to it.
         else:
@@ -375,7 +375,7 @@ class Level:
             if len(tiles) > 1: continue
             placed_tile = tiles[0]
             if blocking_tile := self.fg_tiles.get(place_pos):
-                replace_blocking_tile = placed_tile.on_place_collision(self, blocking_tile)
+                replace_blocking_tile = placed_tile.on_fg_place_collision(self, blocking_tile)
                 if replace_blocking_tile:
                     self.fg_tiles[place_pos] = placed_tile
             else:

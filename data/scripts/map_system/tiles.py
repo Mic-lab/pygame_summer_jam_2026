@@ -67,7 +67,7 @@ class Tile(Entity):
 
         return super().update()
 
-    def on_contact(self, level, blocking_tile):
+    def on_fg_contact(self, level, blocking_tile):
         """When I move on a fg tile that doesn\'t move.
         Returns True if fg_tiles can move to my pos"""
         return False
@@ -77,11 +77,11 @@ class Tile(Entity):
         Returns True if fg_tiles can move to my pos"""
         return False
 
-    def on_move_collision(self, level, moving_tiles, desired_grid_pos):
+    def on_fg_move_collision(self, level, moving_tiles, desired_grid_pos):
         """When several tiles want to move to the same spot."""
         return False
 
-    def on_place_collision(self, level, blocking_tile):
+    def on_fg_place_collision(self, level, blocking_tile):
         """When I am request to be placed on a tile that already has a fg_tile
         Return True if I still get placed."""
         return False
@@ -159,7 +159,7 @@ class Slime(Tile):
 
         self.move_timer.update()
     
-    def on_contact(self, level, blocking_tile):
+    def on_fg_contact(self, level, blocking_tile):
         if not isinstance(blocking_tile, Slime):
             return False
         if blocking_tile.weight > 1:
@@ -207,7 +207,6 @@ class Spikes(Tile):
             self.set_action(level, self.animation.action, force=True)
 
         super().update(game)
-
         triggered = all([level.bg_tiles[trigger_tile].stepped_on for trigger_tile in self.triggers])
         if triggered:
             if self.animation.action == self.original_action:
@@ -250,19 +249,21 @@ class Arrow(Tile):
             # import pprint
             # pprint.pprint(level.fg_tiles)
 
-    def on_move_collision(self, level, moving_tiles, desired_grid_pos):
+    def on_fg_move_collision(self, level, moving_tiles, desired_grid_pos):
         for moving_tile in moving_tiles:
             level.fg_tiles[moving_tile].on_removal(level)
             gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(desired_grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
             level.particle_gens.append(gen)
         return True
 
-    def on_contact(self, level, blocking_tile):
+    def on_fg_contact(self, level, blocking_tile):
         if isinstance(blocking_tile, Slime):
             level.fg_tiles[vector_to_key(blocking_tile.grid_pos)].on_removal(level)
             gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(blocking_tile.grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
             level.particle_gens.append(gen)
-        return True
+            return True
+        else:
+            return False
 
     def on_bg_contact(self, level, blocking_tile):
         level.fg_tiles[vector_to_key(self.grid_pos)].on_removal(level)
@@ -271,7 +272,7 @@ class Arrow(Tile):
         return True
 
     def on_place_collision(self, level, blocking_tile):
-        return self.on_contact(level, blocking_tile)
+        return self.on_fg_contact(level, blocking_tile)
 
 class Bow(Tile):
 

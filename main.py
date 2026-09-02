@@ -58,7 +58,7 @@ class GameHandler:
         mx, my = pygame.mouse.get_pos()
         self.inputs['mouse_pos'] = (mx // config.scale, my // config.scale)
         self.inputs['unscaled_mouse_pos'] = mx, my
-
+ 
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
