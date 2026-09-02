@@ -521,11 +521,65 @@ class Level:
 
 
 class Boss(Entity):
+
+
+
     def __init__(self, pos, name, action=None):
         super().__init__(pos, name, action)
 
-        self.move = None
-        self.move_timer = Timer(60)
+        self.IDLE_POS = self.pos
+        x = 10
+        self.TOP_POS = (x, config.TILE_SIZE[1]*3-0)
+        self.MID_POS = (x, config.TILE_SIZE[1]*6-0)
+        self.BOTTOM_POS = (x, config.TILE_SIZE[1]*9-0)
+        self.ATTACK_ROWS = {
+                3: self.TOP_POS,
+                6: self.MID_POS,
+                9: self.BOTTOM_POS
+                }
+
+        self.state = None
+        self.state_timer = Timer(60)
+
+    def go_to(self, pos):
+        self.real_pos += 0.05*(pos-(self.pos - self.animation.rect.topleft))
+    def set_state(self, new_state, new_time=None):
+        self.state = new_state
+        if new_time is None: new_time = 60
+        self.state_timer = Timer(new_time)
+
+    def row_attack(self, level):
+        attacked_row = None
+        slime_positions = random.sample(list(level.fg_tiles.keys()), len(level.fg_tiles))
+        for pos in slime_positions:
+            if pos[1] in self.ATTACK_ROWS:
+                attacked_row = pos[1]
+                break
+
+        # None of the slimes are in the usual spots
+        if attacked_row is None:
+            attacked_row = random.choice(list(self.ATTACK_ROWS.keys()))
+
+        print(f'{attacked_row=}')
+        self.set_state({'move': attacked_row})
+
+    def update(self, level):
+        super().update()
+
+        if self.state is None:
+            
+            if self.state_timer.done:
+                self.row_attack(level)
+                
+            
+        elif move_row := self.state.get('move'):
+            self.go_to(self.ATTACK_ROWS[move_row])
+
+            if self.state_timer.done:
+                self.row_attack(level)
+
+
+        self.state_timer.update()
 
 class BossLevel(Level):
 
@@ -542,7 +596,7 @@ class BossLevel(Level):
     def update(self, game):
         super().update(game)
 
-        self.boss.update()
+        self.boss.update(game.game_map.level)
 
     def render(self, surf):
         v = pygame.Vector2(self._screen_shake).rotate(random.randint(0, 359))
