@@ -344,11 +344,13 @@ class Level:
 
         # There's a fg tile on where I want to go
         if blocking_fg_tile := self.fg_tiles.get(desired_pos):
+            print(blocking_fg_tile)
             # Does it want to move?
             if desired_pos in self.current_to_desired_requests:
                 # Try to move it
                 tile_can_move = self._resolve_movement_request(desired_pos, self.current_to_desired_requests[desired_pos], visited)
             else:
+                print(True)
                 # It doesn't want to move
                 tile_can_move = False
             # If the other tile is able to move, then I can move
@@ -370,10 +372,10 @@ class Level:
 
         # Handle placement (arrow for example)
         for place_pos, tiles in self.fg_place_requests.items():
-            # If multiple things want to spawn on the same tile...
-            # Probably won't happen, so I'll ignore this case
-            if len(tiles) > 1: continue
-            placed_tile = tiles[0]
+            if len(tiles) > 1:
+                placed_tile = max([(tile, tile.placement_priority) for tile in tiles])[0]
+            else:
+                placed_tile = tiles[0]
             if blocking_tile := self.fg_tiles.get(place_pos):
                 replace_blocking_tile = placed_tile.on_fg_place_collision(self, blocking_tile)
                 if replace_blocking_tile:

@@ -11,7 +11,7 @@ def vector_to_key(vec):
 
 class Tile(Entity):
 
-    def __init__(self, grid_pos, name, action=None, collides=True, allow_stretch=True):
+    def __init__(self, grid_pos, name, action=None, collides=True, allow_stretch=True, placement_priority=0):
         self.grid_pos = grid_pos
         pos = grid_pos[0]*TILE_SIZE[0], grid_pos[1]*TILE_SIZE[1]
         super().__init__(pos, name, action)
@@ -20,6 +20,7 @@ class Tile(Entity):
         self.stepped_on = False
         self.stretch = Vec2(0)
         self.stretch_vel = Vec2(0)
+        self.placement_priority = placement_priority
 
     @property
     def end_pos(self):
@@ -192,7 +193,7 @@ class PressurePlate(Tile):
 
 class Spikes(Tile):
     def __init__(self, pos, action, triggers):
-        super().__init__(pos, 'spikes', action=action, collides=False)
+        super().__init__(pos, 'spikes', action=action, collides=False, placement_priority=1)
         self.triggers = triggers
         self.original_action = action
 
@@ -229,7 +230,7 @@ class Spikes(Tile):
             level.request_fg_delete(self.grid_pos)
             level.request_bg_set(self.grid_pos, self)
 
-    def on_place_collision(self, level, blocking_tile):
+    def on_fg_place_collision(self, level, blocking_tile):
         # When a slime stops the spike from rising up
         level.particle_gens.append(
                 ParticleGenerator.from_template(self.rect.center, 'smoke')
@@ -271,7 +272,7 @@ class Arrow(Tile):
         level.particle_gens.append(gen)
         return True
 
-    def on_place_collision(self, level, blocking_tile):
+    def on_fg_place_collision(self, level, blocking_tile):
         return self.on_fg_contact(level, blocking_tile)
 
 class Bow(Tile):
