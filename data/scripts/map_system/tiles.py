@@ -304,3 +304,27 @@ class Bow(Tile):
                 self.shoot(level)
             else:
                 self.charge()
+
+class AttackTile(Tile):
+
+    def __init__(self, pos):
+        super().__init__(pos, 'attack_tile', action='up', collides=False)
+        self.attack_timer = Timer(30)
+
+    def update(self, game):
+        self.attack_timer.update()
+        return super().update(game)
+
+    def on_stepped(self, level, tile):
+        if tile.weight > 1:
+            if not self.stepped_on:
+                level.play_sound('pressure_plate', suffix=f'_{random.randint(1,3)}.wav')
+            super().on_stepped(level, tile)
+            self.animation.set_action('down')
+        else:
+            if self.stepped_on:
+                self.on_stepped_released(level)
+
+    def on_stepped_released(self, level):
+        super().on_stepped_released(level)
+        self.animation.set_action('up')

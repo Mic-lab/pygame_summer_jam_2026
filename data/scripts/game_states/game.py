@@ -40,7 +40,8 @@ class GameMap:
     def load_level(self, level_name):
         if level_name == 'boss':
             self.level = BossLevel('boss')
-            self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')
+            # self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')
+            self.text_surf = fonts['basic'].get_surf(f'Boss')
         else:
             self.level = Level(level_name)
             self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')

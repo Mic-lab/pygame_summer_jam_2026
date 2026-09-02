@@ -1,5 +1,7 @@
 Content
     - boss
+        - damage boost if every slime is standing on attack tile
+        - change bullet color and put post process effect
 
 Polish
     / slimes do a move animation with stretch

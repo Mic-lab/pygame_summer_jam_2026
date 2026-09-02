@@ -145,6 +145,7 @@ class Level:
             "@": lambda x, y: tiles.RotatedTile((x, y), "tile_32", collides=False),
             "f": lambda x, y: tiles.Tile((x, y), "pot", action='idle'),
             "b": lambda x, y: tiles.Bow((x, y), "bow"),
+            "x": lambda x, y: tiles.AttackTile((x, y)),
             }
 
     FG_TILES = ('s', 'z')
@@ -522,6 +523,9 @@ class Level:
             shader_handler.vars['caTimer'] = 1-self.win_timer.ratio
 
 
+
+# Boss stuff ---------------------------------------------------------------- #
+
 class Boss(Entity):
 
 
@@ -542,6 +546,10 @@ class Boss(Entity):
 
         self.state = None
         self.state_timer = Timer(60)
+
+    # @property
+    # def bullet_desination(self):
+    #     return self
 
     def go_to(self, pos):
         self.real_pos += 0.05*(pos-(self.pos - self.animation.rect.topleft))
@@ -583,6 +591,82 @@ class Boss(Entity):
 
         self.state_timer.update()
 
+class BossBar:
+
+    FG_PAN = Vec2(1, 0)
+
+    def __init__(self, val, max_val) -> None:
+        self._val = val
+        self.max_val = max_val
+        self.bg_img = Animation.img_db['boss_bar_bg']
+        self.fg_img_complete = Animation.img_db['boss_bar_fg']
+        self.update_img()
+
+    @property
+    def ratio(self):
+        return self._val / self.max_val
+
+    def update_img(self):
+        sample_rect = pygame.Rect(0, 0, self.fg_img_complete.get_width() * self.ratio, self.fg_img_complete.get_height())
+        self.fg_img = self.fg_img_complete.subsurface(sample_rect)
+        self.img = pygame.Surface(self.bg_img.get_size())
+        self.img.blit(self.bg_img)
+        self.img.blit(self.fg_img, self.FG_PAN)
+
+    def change_val(self, val_change):
+        self._val += val_change
+        self._val = max(0, self._val)
+        self.update_img()
+
+    def render(self, surf, pos):
+        surf.blit(self.img, pos)
+
+class Bullet:
+
+    INITIAL_VEL = 5
+    VEL_CHANGE = 1
+    VEL_CAP = 5
+
+    def __init__(self, pos, target, level) -> None:
+        self.pos = Vec2(pos)
+        self.target = target
+        self.level = level
+
+        self.vel = self.get_dist_vec()
+        self.vel.scale_to_length(self.INITIAL_VEL)
+
+    def get_dist_vec(self):
+        return (self.target.rect.center - self.pos - self.level.offset)
+
+    def update(self):
+        output = {}
+        self.pos += self.vel
+
+        dist = self.get_dist_vec()
+        if dist.length() < 24:
+            # These are seperated to allow you to play an animation before dying
+            output['hit_boss'] = True
+            output['dead'] = True
+
+        acceleration = dist
+        acceleration.scale_to_length(self.VEL_CHANGE)
+        self.vel += acceleration
+        if self.vel.length() > self.VEL_CAP:
+            self.vel.scale_to_length(self.VEL_CAP)
+
+        return output
+
+    # tmp
+    @property
+    def img(self):
+        s = pygame.Surface((4, 4))
+        s.fill((0, 200, 200))
+        return s
+
+    def render(self, surf, offset):
+        surf.blit(self.img, self.pos+offset)
+
+
 class BossLevel(Level):
 
     def __init__(self, *args, **kwargs):
@@ -591,13 +675,41 @@ class BossLevel(Level):
         boss = Boss((0, 10), 'boss', 'flying')
         center_coord = (0.5*(config.GAME_SIZE-Vec2(boss.img.get_size())))
         boss.real_pos.x = center_coord.x
+
         self.boss = boss
+        self.boss_hp = BossBar(20_000, 20_000)
+        self.bullets = []
+
+        self.attack_tiles = {}
+        for pos, bg_tile in self.bg_tiles.items():
+            if isinstance(bg_tile, tiles.AttackTile):
+                self.attack_tiles[pos] = bg_tile
 
     def commence_win(self): pass
 
     def update(self, game):
         super().update(game)
 
+        for pos, attack_tile in self.attack_tiles.items():
+            slime = self.fg_tiles.get(pos)
+            if not slime: continue
+
+            if attack_tile.attack_timer.done:
+                attack_tile.attack_timer.reset()
+                self.bullets.append(
+                        Bullet(slime.rect.center, self.boss, self)
+                        )
+            # self.boss_hp.change_val(-1)
+
+        new_bullets = []
+        for bullet in self.bullets:
+            bullet_output = bullet.update()
+            if bullet_output.get('hit_boss'):
+                self.boss_hp.change_val(-1)
+            if bullet_output.get('dead'): continue
+            new_bullets.append(bullet)
+        self.bullets = new_bullets
+        
         self.boss.update(game.game_map.level)
 
     def render(self, surf):
@@ -606,3 +718,9 @@ class BossLevel(Level):
 
         super().render(surf)
         self.boss.render(surf, offset=v)
+
+        pos = v+(0.5*(config.GAME_SIZE[0] - self.boss_hp.img.get_width()), 10)
+        self.boss_hp.render(surf, pos)
+
+        for bullet in self.bullets:
+            bullet.render(surf, offset=v+self.offset)

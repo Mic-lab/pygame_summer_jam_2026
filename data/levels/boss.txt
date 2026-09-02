@@ -1,12 +1,12 @@
 0000000000000000000000
 0000000000000000000000
 0wwwwwwwwwwwwwwwwwwww0
-0w..................w0
+0wxxxxxx......xxxxxxw0
 0w000000......000000w0
 0w000000.zzzz.000000w0
-0w.......zzzz.......w0
+0wxxxxxx.zzzz.xxxxxxw0
 0w000000.zzzz.000000w0
 0w000000......000000w0
-0w..................w0
+0wxxxxxx......xxxxxxw0
 0wwwwwwwwwwwwwwwwwwww0
 0000000000000000000000
