@@ -547,6 +547,7 @@ class Boss(Entity):
         self.state = None
         self.state_timer = Timer(60)
 
+
     # @property
     # def bullet_desination(self):
     #     return self
@@ -573,8 +574,13 @@ class Boss(Entity):
         print(f'{attacked_row=}')
         self.set_state({'move': attacked_row})
 
+    def show_beam(self, a, b):
+        self.beam_coords.extend((a, b))
+
     def update(self, level):
         super().update()
+
+        self.beam_coords = []
 
         if self.state is None:
             
@@ -585,11 +591,24 @@ class Boss(Entity):
         elif move_row := self.state.get('move'):
             self.go_to(self.ATTACK_ROWS[move_row])
 
+            if self.state_timer.ratio > 0.5:
+                y = (move_row+0.5)*config.TILE_SIZE[1]
+                x = 30
+                a = level.final_offset + (x, y)
+                b = level.final_offset + (config.GAME_SIZE[0], y)
+                self.show_beam(a, b)
+
             if self.state_timer.done:
                 self.row_attack(level)
 
 
         self.state_timer.update()
+
+    def render(self, surf, **kwargs):
+
+        shader_handler.vars['beamCoords'] = self.beam_coords
+
+        return super().render(surf, **kwargs)
 
 class BossBar:
 
@@ -666,7 +685,6 @@ class Bullet:
     def render(self, surf, offset):
         surf.blit(self.img, self.pos+offset)
 
-
 class BossLevel(Level):
 
     def __init__(self, *args, **kwargs):
@@ -689,6 +707,8 @@ class BossLevel(Level):
 
     def update(self, game):
         super().update(game)
+        self.screen_shake_vec = pygame.Vector2(self._screen_shake).rotate(random.randint(0, 359))
+        self.final_offset = self.screen_shake_vec + self.offset
 
         for pos, attack_tile in self.attack_tiles.items():
             slime = self.fg_tiles.get(pos)
@@ -713,7 +733,7 @@ class BossLevel(Level):
         self.boss.update(game.game_map.level)
 
     def render(self, surf):
-        v = pygame.Vector2(self._screen_shake).rotate(random.randint(0, 359))
+        v = self.screen_shake_vec
         # final_offset = self.offset + v
 
         super().render(surf)
@@ -723,4 +743,4 @@ class BossLevel(Level):
         self.boss_hp.render(surf, pos)
 
         for bullet in self.bullets:
-            bullet.render(surf, offset=v+self.offset)
+            bullet.render(surf, offset=self.final_offset)

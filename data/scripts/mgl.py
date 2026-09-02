@@ -12,6 +12,11 @@ def update_tex(tex, surf):
 
 class ShaderHandler:
 
+    # Vec2 support only
+    ARRAY_SIZES = {
+        'beamCoords': 8
+            }
+
     def __init__(self):
         self.vert_shader = read_txt('data/scripts/shaders/vert.glsl')
         self.frag_shader = read_txt('data/scripts/shaders/frag.glsl')
@@ -59,6 +64,16 @@ class ShaderHandler:
 
     def transfer_vars(self):
         for key, val in self.vars.items():
+
+            if size := self.ARRAY_SIZES.get(key):
+                array = [(-1, -1)]*size
+                for i, item in enumerate(val):
+                    array[i] = item
+
+                self.program[key] = array
+                continue
+
+
             self.program[key] = val
 
     def surf2tex(self, surf, repeat:bool = False):

@@ -10,6 +10,7 @@ uniform float shakeTimer = -1.0;
 uniform float caTimer = -1.0;
 uniform float flashTimer = -1.0;
 uniform float restartTimer = -1.0;
+uniform vec2[8] beamCoords;
 in vec2 uvs;
 out vec4 f_color;
 
@@ -28,6 +29,10 @@ vec2 rotateVec(vec2 vec, float theta) {
 
 float linearEase(float x) {
     return -2*abs(x - 0.5) + 1;
+}
+
+vec2 normalizeScreenVec(vec2 v) {
+    return vec2(v.x / screenSize.x, v.y/screenSize.y);
 }
 
 void main() {
@@ -95,6 +100,27 @@ void main() {
         vec4 sampleMix = mix( mix(caSample1, caSample2, 0.5), caSample3, 0.5 );
         f_color = mix(f_color, sampleMix, 0.5);
     }
+
+
+    // Beam
+    // beamCoords: ((Ax1, Ay1), (Bx1, By1), (Ax2, Ay2), ...)
+    for (int i = 0; i < beamCoords.length(); i+=2) {
+        vec2 beamCoordA = beamCoords[i];
+        if (beamCoordA == vec2(-1, -1)) {break; }
+        vec2 beamCoordB = beamCoords[i+1];
+        beamCoordA = normalizeScreenVec(beamCoordA);
+        beamCoordB = normalizeScreenVec(beamCoordB);
+
+        // y = mx+b that goes through A and B
+        float m = (beamCoordB.y - beamCoordA.y) / (beamCoordB.x - beamCoordA.x);
+        float b = beamCoordA.y - m*beamCoordA.x;
+        vec2 lineCoord = vec2(uvs.x, m*uvs.x + b);
+
+        if (uvs.x > beamCoordA.x && uvs.x < beamCoordB.x && abs(uvs.y-lineCoord.y) < 0.01) {
+            f_color *= 5;
+        }
+    }
+
 
     // Win flash
     if (flashTimer > 0) {
