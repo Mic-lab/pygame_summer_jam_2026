@@ -3,6 +3,9 @@ Content
         - damage boost if every slime is standing on attack tile
             - change bullet color and put post process effect
         - After dying, show random dialogue. Gremlin that says "Yikes..." or something like that.
+        - 2 phases:
+            - slower at the start, faster and include more attacks on second
+        - intro (only show first time)
 
 
 Polish
