@@ -32,11 +32,14 @@ float linearEase(float x) {
 }
 
 vec2 normalizeScreenVec(vec2 v) {
-    return vec2(v.x / screenSize.x, v.y/screenSize.y);
+    return v/screenSize.x;
 }
 
 void main() {
     f_color = vec4(texture(canvasTex, uvs).rgb, 1.0);
+
+    vec2 uvsS = vec2(uvs.x, uvs.y * screenSize.y/screenSize.x);
+
     float centerDist = distance(uvs, vec2(0.5, 0.5));
 
     // Chromatic abberation
@@ -102,24 +105,38 @@ void main() {
     }
 
 
+    float beamNoise1 = texture(perlinNoise, vec2(uvs.x, uvs.y)*0.0005*time).r;
+    float beamNoise2 = texture(perlinNoise, vec2(uvs.x*1.5, uvs.y*1)*0.001*time).r;
+        
     // Beam
     // beamCoords: ((Ax1, Ay1), (Bx1, By1), (Ax2, Ay2), ...)
     for (int i = 0; i < beamCoords.length(); i+=2) {
         vec2 beamCoordA = beamCoords[i];
         if (beamCoordA == vec2(-1, -1)) {break; }
+
         vec2 beamCoordB = beamCoords[i+1];
-        beamCoordA = normalizeScreenVec(beamCoordA);
-        beamCoordB = normalizeScreenVec(beamCoordB);
+        vec2 a = normalizeScreenVec(beamCoordA);
+        vec2 b = normalizeScreenVec(beamCoordB);
 
-        // y = mx+b that goes through A and B
-        float m = (beamCoordB.y - beamCoordA.y) / (beamCoordB.x - beamCoordA.x);
-        float b = beamCoordA.y - m*beamCoordA.x;
-        vec2 lineCoord = vec2(uvs.x, m*uvs.x + b);
 
-        if (uvs.x > beamCoordA.x && uvs.x < beamCoordB.x && abs(uvs.y-lineCoord.y) < 0.01) {
-            f_color *= 5;
+        // Get the projection of uvs onto a-b if `a` is considered as the origin
+        vec2 line = b-a;  // (b-a)-(a-a)
+        vec2 uvsProj = line * (dot(uvsS-a, line) / dot(line, line));
+        // If projection not aligned with the line
+        if (dot(uvsProj, line) < 0) {
+            uvsProj *= 0;
         }
-    }
+        else {
+            uvsProj /= length(uvsProj) / min(length(uvsProj), length(line));
+        }
+        vec2 lineDist = (uvsS-a)-uvsProj;
+
+        float d = length(lineDist);
+        if (d < 0.013+abs(beamNoise1-0.5)*0.005) {
+            f_color *=3;
+            f_color.rgb = mix(f_color.rgb, vec3(0.8, 0.9, 1), 0.4);
+            }
+        }
 
 
     // Win flash

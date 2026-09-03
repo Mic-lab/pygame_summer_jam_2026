@@ -537,28 +537,39 @@ class Boss(Entity):
 
         self.IDLE_POS = self.pos
         x = 5
-        self.TOP_POS = (x, config.TILE_SIZE[1]*3-0)
-        self.MID_POS = (x, config.TILE_SIZE[1]*6-0)
-        self.BOTTOM_POS = (x, config.TILE_SIZE[1]*9-0)
-        self.ATTACK_ROWS = {
-                3: self.TOP_POS,
-                6: self.MID_POS,
-                9: self.BOTTOM_POS
+        self.ATTACKS = {
+                'left': {
+                    'cols': (2,3,4,5)
+                    },
+                'right': {
+                    },
+                'top': {
+                    'pos': (0, 4*config.TILE_SIZE[1]),
+                    'beams': (
+                        ((2, 5), (10, 5)),
+                        ((2, 6), (10, 6)),
+                        ((9, 2), (9, 8)),
+                        )
+                    },
+
                 }
 
-        self.state = {}
-        self.state_timer = Timer(60)
-        self.warning = Entity((0, 0), 'attack_warning', action='idle')
+        self.set_state({}, duration=60)
+        self.warnings = []
 
     def go_to(self, pos):
         self.real_pos += 0.05*(pos-(self.pos - self.animation.rect.topleft))
 
-    def set_state(self, new_state, new_time=None):
+    def set_state(self, new_state, duration=None):
         self.state = new_state
-        if new_time is None: new_time = 60
-        self.state_timer = Timer(new_time)
+        if duration is None: duration = 60
+        self.state_timer = Timer(duration)
+        self.first_state_frame = True
 
     def row_attack(self, level):
+        self.set_state({'attack': 'top'}, duration=8*60)
+
+        return
         attacked_row = None
         slime_positions = random.sample(list(level.fg_tiles.keys()), len(level.fg_tiles))
         for pos in slime_positions:
@@ -571,17 +582,28 @@ class Boss(Entity):
             attacked_row = random.choice(list(self.ATTACK_ROWS.keys()))
 
         print(f'{attacked_row=}')
-        self.set_state({'move': attacked_row}, new_time=8*60)
+        self.set_state({'move': attacked_row}, duration=8*60)
 
     def show_beam(self, a, b):
         self.beam_coords.extend((a, b))
 
     @property
     def is_pre_attack(self):
-        return self.state.get('move') and self.state_timer.ratio < 0.5
+        return self.state.get('attack') and self.state_timer.ratio < 0.5
+
+    @staticmethod
+    def grid_to_px(grid_pos, level, center=True):
+        if not center:
+            x, y = grid_pos
+        else:
+            x, y = grid_pos[0]+0.5, grid_pos[1]+0.5
+        return Vec2(config.TILE_SIZE[0] * x, config.TILE_SIZE[1] * y) + level.final_offset
+
 
     def update(self, level):
         super().update()
+
+        initial_first_state_frame = self.first_state_frame
 
         self.beam_coords = []
 
@@ -591,22 +613,36 @@ class Boss(Entity):
                 self.row_attack(level)
                 
             
-        elif move_row := self.state.get('move'):
-            self.go_to(self.ATTACK_ROWS[move_row])
+        elif attack_direction := self.state.get('attack'):
+            attack_data = self.ATTACKS[attack_direction]
+            self.go_to(attack_data['pos'])
 
             if self.is_pre_attack:
-                self.warning.real_pos = Vec2(self.rect.topleft) + (30, 0)
-                self.warning.update()
+                if self.first_state_frame:
+                    for a, b in attack_data['beams']:
+                        if a[1] == b[1]:
+                            warning_pos_a = self.grid_to_px((a[0]-1, a[1]), level, center=False)
+                            warning_pos_b = self.grid_to_px((b[0]+1, b[1]), level, center=False)
+                        elif a[0] == b[0]:
+                            warning_pos_a = self.grid_to_px((a[0], a[1]-1), level, center=False)
+                            warning_pos_b = self.grid_to_px((b[0], b[1]+1), level, center=False)
+                        else: raise ValueError('Bean that isnt vertical or horizontal detected')
+                        self.warnings.append(Entity(warning_pos_a, 'attack_warning', action='idle'))
+                        self.warnings.append(Entity(warning_pos_b, 'attack_warning', action='idle'))
+
+                for warning in self.warnings: warning.update()
             else:
-                y = (move_row+0.5)*config.TILE_SIZE[1]
-                x = 30
-                a = level.final_offset + (x, y)
-                b = level.final_offset + (config.GAME_SIZE[0], y)
-                self.show_beam(a, b)
+                self.warnings = []
+                for a, b in attack_data['beams']:
+                    a = self.grid_to_px(a, level)
+                    b = self.grid_to_px(b, level)
+                    self.show_beam(a, b)
 
             if self.state_timer.done:
                 self.row_attack(level)
 
+        if initial_first_state_frame:
+            self.first_state_frame = False
         self.state_timer.update()
 
     def render(self, surf, **kwargs):
@@ -615,9 +651,10 @@ class Boss(Entity):
 
         
         super().render(surf, **kwargs)
-
-        if self.is_pre_attack:
-            self.warning.render(surf, **kwargs)
+        
+        for warning in self.warnings:
+            print(warning)
+            warning.render(surf)
 
 class BossBar:
 
