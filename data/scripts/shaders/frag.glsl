@@ -3,6 +3,7 @@
 uniform sampler2D canvasTex;
 uniform sampler2D perlinNoise;
 uniform float time;
+// uniform int scale;
 uniform float transitionTimer = -1.0;
 uniform float levelTransitionTimer = -1.0;
 uniform int transitionState = 0;
@@ -39,7 +40,7 @@ void main() {
     f_color = vec4(texture(canvasTex, uvs).rgb, 1.0);
 
     vec2 uvsS = vec2(uvs.x, uvs.y * screenSize.y/screenSize.x);
-
+    vec2 uvsSPx = vec2(floor(uvsS*screenSize.x)/screenSize.x);
     float centerDist = distance(uvs, vec2(0.5, 0.5));
 
     // Chromatic abberation
@@ -105,8 +106,8 @@ void main() {
     }
 
 
-    float beamNoise1 = texture(perlinNoise, vec2(uvs.x, uvs.y)*0.0005*time).r;
-    float beamNoise2 = texture(perlinNoise, vec2(uvs.x*1.5, uvs.y*1)*0.001*time).r;
+    float beamNoise1 = texture(perlinNoise, vec2(uvsSPx)*0.0005*time).r;
+    float beamNoise2 = texture(perlinNoise, vec2(uvsSPx)*0.001*time).r;
         
     // Beam
     // beamCoords: ((Ax1, Ay1), (Bx1, By1), (Ax2, Ay2), ...)
@@ -121,7 +122,7 @@ void main() {
 
         // Get the projection of uvs onto a-b if `a` is considered as the origin
         vec2 line = b-a;  // (b-a)-(a-a)
-        vec2 uvsProj = line * (dot(uvsS-a, line) / dot(line, line));
+        vec2 uvsProj = line * (dot(uvsSPx-a, line) / dot(line, line));
         // If projection not aligned with the line
         if (dot(uvsProj, line) < 0) {
             uvsProj *= 0;
@@ -129,7 +130,7 @@ void main() {
         else {
             uvsProj /= length(uvsProj) / min(length(uvsProj), length(line));
         }
-        vec2 lineDist = (uvsS-a)-uvsProj;
+        vec2 lineDist = (uvsSPx-a)-uvsProj;
 
         float d = length(lineDist);
         if (d < 0.013+abs(beamNoise1-0.5)*0.005) {

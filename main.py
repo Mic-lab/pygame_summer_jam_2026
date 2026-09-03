@@ -98,6 +98,7 @@ class GameHandler:
 
             self.handle_transition()
 
+            # shader_handler.vars['scale'] = config.scale
             shader_handler.surfs['canvasTex'] = self.canvas
             shader_handler.vars["time"] = self.shader_time
             shader_handler.render()

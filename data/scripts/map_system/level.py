@@ -268,23 +268,20 @@ class Level:
             tile.update(game)
 
         # Handle dialogue ---------------------- #
+        start_dialogues = {
+                'tutorial_1': 'This\'ll be a bit difficult...',
+                'level_0': 'Hold [r] to restart',
+                'level_3': 'Good luck!',
+                'pre_boss': 'Remember, hold [shift] to move quickly.\nThis may be important soon...'
+                }
+        
+        if self.level_name in start_dialogues and not self.added_surf:
+            img = fonts['basic'].get_surf(start_dialogues[self.level_name])
+            self.add_surf(img, (0, 40), center_x=True)
+            self.added_surf = True
+
         if self.pressed_pressure_plate and self.level_name == 'tutorial_0' and not self.added_surf:
             img = fonts['basic'].get_surf(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
-            self.add_surf(img, (0, 40), center_x=True)
-            self.added_surf = True
-
-        elif self.level_name == "tutorial_1" and not self.added_surf:
-            img = fonts['basic'].get_surf(f'This\'ll be a bit diffuclt...')
-            self.add_surf(img, (0, 40), center_x=True)
-            self.added_surf = True
-
-        elif self.level_name == "level_0" and not self.added_surf:
-            img = fonts['basic'].get_surf(f'Hold [r] to restart.')
-            self.add_surf(img, (0, 40), center_x=True)
-            self.added_surf = True
-
-        elif self.level_name == "level_3" and not self.added_surf:
-            img = fonts['basic'].get_surf(f'Good luck!')
             self.add_surf(img, (0, 40), center_x=True)
             self.added_surf = True
         # -------------------------------------- #
@@ -536,7 +533,8 @@ class Boss(Entity):
         super().__init__(pos, name, action)
 
         self.IDLE_POS = self.pos
-        x = 5
+        w = 15
+        h = 13
         right_edge = 40  # random big number to make the beam go offscreen
         bottom_edge = 40
 
@@ -552,6 +550,18 @@ class Boss(Entity):
                         ((7, 1), (7, bottom_edge)),
                         )
                     },
+                'right': {
+                    'pos': (w-3, 0),
+                    'beams': (
+                        ((w-2, 1), (w-2, bottom_edge)),
+                        ((w-3, 1), (w-3, bottom_edge)),
+                        ((w-4, 1), (w-4, bottom_edge)),
+                        ((w-5, 1), (w-5, bottom_edge)),
+                        ((w-6, 1), (w-6, bottom_edge)),
+                        ((w-7, 1), (w-7, bottom_edge)),
+                        )
+                    },
+                
                 'top': {
                     'pos': (0, 3),
                     'beams': (
@@ -563,9 +573,22 @@ class Boss(Entity):
                         )
                     },
 
+                'bottom': {
+                    'pos': (0, 8),
+                    'beams': (
+                        ((1, 10), (right_edge, 10)),
+                        ((1, 9), (right_edge, 9)),
+                        ((1, 8), (right_edge, 8)),
+                        ((1, 7), (right_edge, 7)),
+                        ((1, 6), (right_edge, 6)),
+                        ((1, 5), (right_edge, 5)),
+                        ((1, 4), (right_edge, 4)),
+                        )
+                    },
+
                 }
 
-        self.set_state({}, duration=60)
+        self.set_state({'idle':True}, duration=60*4)
         self.warnings = []
 
     def go_to(self, pos):
@@ -577,9 +600,8 @@ class Boss(Entity):
         self.state_timer = Timer(duration)
         self.first_state_frame = True
 
-    def row_attack(self, level):
-        atk = random.choice(('top', 'left'))
-        self.set_state({'attack':atk}, duration=8*60)
+    def row_attack(self, level, attack):
+        self.set_state({'attack': attack}, duration=7*60)
         # return
         # attacked_row = None
         # slime_positions = random.sample(list(level.fg_tiles.keys()), len(level.fg_tiles))
@@ -618,10 +640,11 @@ class Boss(Entity):
 
         self.beam_coords = []
 
-        if self.state == {}:
+        if self.state.get('idle'):
             
             if self.state_timer.done:
-                self.row_attack(level)
+                attack = random.choice(('top', 'bottom', 'left', 'right'))
+                self.row_attack(level, attack)
                 
             
         elif attack_direction := self.state.get('attack'):
@@ -650,7 +673,10 @@ class Boss(Entity):
                     self.show_beam(a, b)
 
             if self.state_timer.done:
-                self.row_attack(level)
+                attacks = ['top', 'bottom', 'left', 'right']
+                attacks.remove(attack_direction)
+                attack = random.choice(attacks)
+                self.row_attack(level, attack)
 
         if initial_first_state_frame:
             self.first_state_frame = False

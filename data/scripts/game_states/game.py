@@ -19,6 +19,7 @@ from ..map_system.level import Level, BossLevel
 class GameMap:
 
     LEVEL_NAMES = (
+            'pre_boss',
             'boss',
             'bow_test',
 
@@ -57,6 +58,7 @@ class GameMap:
             if self.transition_timer.ratio >= 0.5 and not self.completed_transition:
                 self.level_index += 1
                 self.load_level(self.LEVEL_NAMES[self.level_index])
+                self.level.update(game)
                 self.completed_transition = True
 
             shader_handler.vars['levelTransitionTimer'] = self.transition_timer.ratio
