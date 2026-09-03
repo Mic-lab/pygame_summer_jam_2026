@@ -11,6 +11,7 @@ from ..animation import Animation
 from ..mgl import shader_handler
 from ..particle import ParticleGenerator
 from ..entity import Entity
+from ..font import fonts
 import random
 
 SOLID_TILES = {"0"}
@@ -436,6 +437,7 @@ class Level:
         # Simple level layout used for autotiling
         level = []
         for line in level_file_content.split("\n"):
+            if line.startswith('!!!'): break
             if line:
                 line_list = []
                 while " " in line_list:
@@ -534,7 +536,7 @@ class Boss(Entity):
         super().__init__(pos, name, action)
 
         self.IDLE_POS = self.pos
-        x = 10
+        x = 5
         self.TOP_POS = (x, config.TILE_SIZE[1]*3-0)
         self.MID_POS = (x, config.TILE_SIZE[1]*6-0)
         self.BOTTOM_POS = (x, config.TILE_SIZE[1]*9-0)
@@ -544,16 +546,13 @@ class Boss(Entity):
                 9: self.BOTTOM_POS
                 }
 
-        self.state = None
+        self.state = {}
         self.state_timer = Timer(60)
-
-
-    # @property
-    # def bullet_desination(self):
-    #     return self
+        self.warning = Entity((0, 0), 'attack_warning', action='idle')
 
     def go_to(self, pos):
         self.real_pos += 0.05*(pos-(self.pos - self.animation.rect.topleft))
+
     def set_state(self, new_state, new_time=None):
         self.state = new_state
         if new_time is None: new_time = 60
@@ -572,17 +571,21 @@ class Boss(Entity):
             attacked_row = random.choice(list(self.ATTACK_ROWS.keys()))
 
         print(f'{attacked_row=}')
-        self.set_state({'move': attacked_row})
+        self.set_state({'move': attacked_row}, new_time=8*60)
 
     def show_beam(self, a, b):
         self.beam_coords.extend((a, b))
+
+    @property
+    def is_pre_attack(self):
+        return self.state.get('move') and self.state_timer.ratio < 0.5
 
     def update(self, level):
         super().update()
 
         self.beam_coords = []
 
-        if self.state is None:
+        if self.state == {}:
             
             if self.state_timer.done:
                 self.row_attack(level)
@@ -591,7 +594,10 @@ class Boss(Entity):
         elif move_row := self.state.get('move'):
             self.go_to(self.ATTACK_ROWS[move_row])
 
-            if self.state_timer.ratio > 0.5:
+            if self.is_pre_attack:
+                self.warning.real_pos = Vec2(self.rect.topleft) + (30, 0)
+                self.warning.update()
+            else:
                 y = (move_row+0.5)*config.TILE_SIZE[1]
                 x = 30
                 a = level.final_offset + (x, y)
@@ -601,14 +607,17 @@ class Boss(Entity):
             if self.state_timer.done:
                 self.row_attack(level)
 
-
         self.state_timer.update()
 
     def render(self, surf, **kwargs):
 
         shader_handler.vars['beamCoords'] = self.beam_coords
 
-        return super().render(surf, **kwargs)
+        
+        super().render(surf, **kwargs)
+
+        if self.is_pre_attack:
+            self.warning.render(surf, **kwargs)
 
 class BossBar:
 
@@ -690,18 +699,20 @@ class BossLevel(Level):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.offset += Vec2(0, 32)
-        boss = Boss((0, 10), 'boss', 'flying')
+        boss = Boss((0, 30), 'boss', 'flying')
         center_coord = (0.5*(config.GAME_SIZE-Vec2(boss.img.get_size())))
         boss.real_pos.x = center_coord.x
 
         self.boss = boss
-        self.boss_hp = BossBar(20_000, 20_000)
+        self.boss_hp = BossBar(5_000, 5_000)
         self.bullets = []
 
         self.attack_tiles = {}
         for pos, bg_tile in self.bg_tiles.items():
             if isinstance(bg_tile, tiles.AttackTile):
                 self.attack_tiles[pos] = bg_tile
+
+        self.lives = 3
 
     def commence_win(self): pass
 
@@ -739,8 +750,10 @@ class BossLevel(Level):
         super().render(surf)
         self.boss.render(surf, offset=v)
 
-        pos = v+(0.5*(config.GAME_SIZE[0] - self.boss_hp.img.get_width()), 10)
+        pos = v+(0.5*(config.GAME_SIZE[0] - self.boss_hp.img.get_width()), 20)
         self.boss_hp.render(surf, pos)
 
         for bullet in self.bullets:
             bullet.render(surf, offset=self.final_offset)
+
+        surf.blit(fonts['regular'].get_surf(f'Lives: {self.lives}'), (50, 50))
