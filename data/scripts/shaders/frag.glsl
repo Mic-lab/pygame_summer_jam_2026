@@ -11,6 +11,7 @@ uniform float shakeTimer = -1.0;
 uniform float caTimer = -1.0;
 uniform float flashTimer = -1.0;
 uniform float restartTimer = -1.0;
+uniform float hitTimer = -1.0;
 uniform vec2[32] beamCoords;
 in vec2 uvs;
 out vec4 f_color;
@@ -155,6 +156,14 @@ void main() {
         gray.b*=intensity*3;
         f_color.rgb = mix(f_color.rgb, gray, (min(1.4*intensity, 1)));
         f_color *= 1-intensity;
+    }
+
+    // Player hit timer
+    if (hitTimer > 0) {
+        vec3 gray = vec3((f_color.r + f_color.g + f_color.b)/3)*0.5;
+        // vec3 gray = vec3(f_color.r, 0, 0);
+        float intensity = pow(hitTimer, 2);
+        f_color.rgb = mix(f_color.rgb, gray, intensity);
     }
 
     // Level Transition Timer

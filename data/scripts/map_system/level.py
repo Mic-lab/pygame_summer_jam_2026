@@ -476,7 +476,7 @@ class Level:
                         tile = Level.TILE_MAP[c](x, y)
                         bg_tiles[(x, y)] = tile
 
-        level_size = (max_x, max_y)
+        level_size = (max_x+1, max_y+1)
 
         # Create the autotile objects
         level_copy = copy.deepcopy(level)
@@ -570,6 +570,20 @@ class Boss(Entity):
                         ((1, 4), (right_edge, 4)),
                         ((1, 5), (right_edge, 5)),
                         ((1, 6), (right_edge, 6)),
+                        ((1, 7), (right_edge, 7)),
+                        )
+                    },
+
+                'top_hard': {
+                    'pos': (0, 3),
+                    'beams': (
+                        ((1, 2), (right_edge, 2)),
+                        ((1, 3), (right_edge, 3)),
+                        ((1, 4), (right_edge, 4)),
+                        ((1, 5), (right_edge, 5)),
+                        ((1, 6), (right_edge, 6)),
+                        ((1, 7), (right_edge, 7)),
+                        ((1, 9), (right_edge, 9)),
                         )
                     },
 
@@ -601,7 +615,7 @@ class Boss(Entity):
         self.first_state_frame = True
 
     def row_attack(self, level, attack):
-        self.set_state({'attack': attack}, duration=7*60)
+        self.set_state({'attack': attack}, duration=4*60)
         # return
         # attacked_row = None
         # slime_positions = random.sample(list(level.fg_tiles.keys()), len(level.fg_tiles))
@@ -617,7 +631,10 @@ class Boss(Entity):
         # print(f'{attacked_row=}')
         # self.set_state({'move': attacked_row}, duration=8*60)
 
-    def show_beam(self, a, b):
+    def show_beam(self, a, b, level):
+        self.beam_grid_coords.extend((a, b))
+        a = self.grid_to_px(a, level)
+        b = self.grid_to_px(b, level)
         self.beam_coords.extend((a, b))
 
     @property
@@ -639,11 +656,15 @@ class Boss(Entity):
         initial_first_state_frame = self.first_state_frame
 
         self.beam_coords = []
+        self.beam_grid_coords = []
 
         if self.state.get('idle'):
             
             if self.state_timer.done:
                 attack = random.choice(('top', 'bottom', 'left', 'right'))
+                # attack = random.choice(('left', 'right'))
+                
+                # attack = random.choice(('top_hard',))
                 self.row_attack(level, attack)
                 
             
@@ -668,9 +689,7 @@ class Boss(Entity):
             else:
                 self.warnings = []
                 for a, b in attack_data['beams']:
-                    a = self.grid_to_px(a, level)
-                    b = self.grid_to_px(b, level)
-                    self.show_beam(a, b)
+                    self.show_beam(a, b, level)
 
             if self.state_timer.done:
                 attacks = ['top', 'bottom', 'left', 'right']
@@ -690,7 +709,6 @@ class Boss(Entity):
         super().render(surf, **kwargs)
         
         for warning in self.warnings:
-            print(warning)
             warning.render(surf)
 
 class BossBar:
@@ -772,8 +790,9 @@ class BossLevel(Level):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.game_over = False
         self.offset += Vec2(0, 32)
-        boss = Boss((0, 30), 'boss', 'flying')
+        boss = Boss((0, 25), 'boss', 'flying')
         center_coord = (0.5*(config.GAME_SIZE-Vec2(boss.img.get_size())))
         boss.real_pos.x = center_coord.x
 
@@ -786,7 +805,11 @@ class BossLevel(Level):
             if isinstance(bg_tile, tiles.AttackTile):
                 self.attack_tiles[pos] = bg_tile
 
-        self.lives = 3
+        self.player_hp = 3
+        self.timers = {
+                'invincibility': Timer(3*60, done=True),
+                'hit': Timer(120, done=True)
+                }
 
     def commence_win(self): pass
 
@@ -814,8 +837,61 @@ class BossLevel(Level):
             if bullet_output.get('dead'): continue
             new_bullets.append(bullet)
         self.bullets = new_bullets
-        
+
         self.boss.update(game.game_map.level)
+
+        self.detect_slime_beam_collision(game)
+        
+        for timer in self.timers.values():
+            timer.update()
+
+    def detect_slime_beam_collision(self, game):
+        beam_on_slime = False
+        for i in range(0, len(self.boss.beam_grid_coords), 2):
+            a = self.boss.beam_grid_coords[i]
+            b = self.boss.beam_grid_coords[i+1]
+            if a[0] == b[0]:
+                x = a[0]
+                y_min = max(min(a[1], b[1]), 0)
+                y_max = min(max(a[1], b[1])+1, self.level_size[1]-1)
+                for y in range(y_min, y_max):
+                    if self.fg_tiles.get((x, y)):
+                        beam_on_slime = True
+                        break
+            elif a[1] == b[1]:
+                y = a[1]
+                x_min = max(min(a[0], b[0]), 0)
+                x_max = min(max(a[0], b[0])+1, self.level_size[0]-1)
+                for x in range(x_min, x_max):
+                    if self.fg_tiles.get((x, y)):
+                        beam_on_slime = True
+                        break
+            else:
+                raise ValueError('found beam that\'s not horizontal or vertical')
+
+            if beam_on_slime: break
+
+        if beam_on_slime and not self.game_over:
+            self.take_dmg(game)
+
+    def take_dmg(self, game):
+        if not self.timers['invincibility'].done: return
+        sfx.sounds['hit.wav'].play()
+        self.player_hp -= 1
+        self.timers['invincibility'].reset()
+        self.timers['hit'].reset()
+
+        if self.player_hp == 0:
+            self.game_over = True
+            game_map = game.game_map
+            game_map.level_index -= 2  # -2 cause the game map will do do +1, so the level would only go 1 back
+            sfx.sounds['transition.wav'].play()
+            self.update(game)  # Just so u can see the slime move towards the beam
+            game_map.transition_timer.duration = 100
+            game_map.transition_timer.reset()
+            game_map.completed_transition = False
+
+            
 
     def render(self, surf):
         v = self.screen_shake_vec
@@ -830,4 +906,5 @@ class BossLevel(Level):
         for bullet in self.bullets:
             bullet.render(surf, offset=self.final_offset)
 
-        surf.blit(fonts['regular'].get_surf(f'Lives: {self.lives}'), (50, 50))
+        surf.blit(fonts['regular'].get_surf(f'Player HP: {self.player_hp}'), (50, 50))
+        shader_handler.vars['hitTimer'] = 1-self.timers['hit'].ratio

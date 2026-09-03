@@ -47,18 +47,25 @@ class GameMap:
             self.level = Level(level_name)
             self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')
 
+    def load_level_from_index(self, game):
+        print(f'loading_level {self.level_index}')
+        self.load_level(self.LEVEL_NAMES[self.level_index])
+        self.level.update(game)
+
+
     def update(self, game):
         if self.transition_timer.done:
             if game.inputs['pressed'].get('return'):
                 sfx.sounds['transition.wav'].play()
+                self.transition_timer.duration = 20
                 self.transition_timer.reset()
                 self.completed_transition = False
             self.level.update(game)
         else:
+            print(self.transition_timer, self.completed_transition)
             if self.transition_timer.ratio >= 0.5 and not self.completed_transition:
                 self.level_index += 1
-                self.load_level(self.LEVEL_NAMES[self.level_index])
-                self.level.update(game)
+                self.load_level_from_index(game)
                 self.completed_transition = True
 
             shader_handler.vars['levelTransitionTimer'] = self.transition_timer.ratio
@@ -66,6 +73,11 @@ class GameMap:
 
     def render(self, surf):
         surf.blit(self.text_surf, Vec2(0.5*config.GAME_SIZE[0], 4) - (0.5*self.text_surf.get_width(), 0))
+
+
+        shader_handler.vars['beamCoords'] = []
+        shader_handler.vars['hitTimer'] = -1
+
         self.level.render(surf)
 
 
