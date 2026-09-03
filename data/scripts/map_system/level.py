@@ -537,18 +537,29 @@ class Boss(Entity):
 
         self.IDLE_POS = self.pos
         x = 5
+        right_edge = 40  # random big number to make the beam go offscreen
+        bottom_edge = 40
+
         self.ATTACKS = {
                 'left': {
-                    'cols': (2,3,4,5)
-                    },
-                'right': {
+                    'pos': (3, 0),
+                    'beams': (
+                        ((2, 1), (2, bottom_edge)),
+                        ((3, 1), (3, bottom_edge)),
+                        ((4, 1), (4, bottom_edge)),
+                        ((5, 1), (5, bottom_edge)),
+                        ((6, 1), (6, bottom_edge)),
+                        ((7, 1), (7, bottom_edge)),
+                        )
                     },
                 'top': {
-                    'pos': (0, 4*config.TILE_SIZE[1]),
+                    'pos': (0, 3),
                     'beams': (
-                        ((2, 5), (10, 5)),
-                        ((2, 6), (10, 6)),
-                        ((9, 2), (9, 8)),
+                        ((1, 2), (right_edge, 2)),
+                        ((1, 3), (right_edge, 3)),
+                        ((1, 4), (right_edge, 4)),
+                        ((1, 5), (right_edge, 5)),
+                        ((1, 6), (right_edge, 6)),
                         )
                     },
 
@@ -558,7 +569,7 @@ class Boss(Entity):
         self.warnings = []
 
     def go_to(self, pos):
-        self.real_pos += 0.05*(pos-(self.pos - self.animation.rect.topleft))
+        self.real_pos += 0.05*((Vec2(pos) - self.animation.rect.topleft) - self.pos)
 
     def set_state(self, new_state, duration=None):
         self.state = new_state
@@ -567,22 +578,22 @@ class Boss(Entity):
         self.first_state_frame = True
 
     def row_attack(self, level):
-        self.set_state({'attack': 'top'}, duration=8*60)
-
-        return
-        attacked_row = None
-        slime_positions = random.sample(list(level.fg_tiles.keys()), len(level.fg_tiles))
-        for pos in slime_positions:
-            if pos[1] in self.ATTACK_ROWS:
-                attacked_row = pos[1]
-                break
-
-        # None of the slimes are in the usual spots
-        if attacked_row is None:
-            attacked_row = random.choice(list(self.ATTACK_ROWS.keys()))
-
-        print(f'{attacked_row=}')
-        self.set_state({'move': attacked_row}, duration=8*60)
+        atk = random.choice(('top', 'left'))
+        self.set_state({'attack':atk}, duration=8*60)
+        # return
+        # attacked_row = None
+        # slime_positions = random.sample(list(level.fg_tiles.keys()), len(level.fg_tiles))
+        # for pos in slime_positions:
+        #     if pos[1] in self.ATTACK_ROWS:
+        #         attacked_row = pos[1]
+        #         break
+        #
+        # # None of the slimes are in the usual spots
+        # if attacked_row is None:
+        #     attacked_row = random.choice(list(self.ATTACK_ROWS.keys()))
+        #
+        # print(f'{attacked_row=}')
+        # self.set_state({'move': attacked_row}, duration=8*60)
 
     def show_beam(self, a, b):
         self.beam_coords.extend((a, b))
@@ -615,7 +626,7 @@ class Boss(Entity):
             
         elif attack_direction := self.state.get('attack'):
             attack_data = self.ATTACKS[attack_direction]
-            self.go_to(attack_data['pos'])
+            self.go_to(self.grid_to_px(attack_data['pos'], level, center=False))
 
             if self.is_pre_attack:
                 if self.first_state_frame:

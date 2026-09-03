@@ -36,8 +36,10 @@ class Entity:
         return self.animation.update()
 
     def render(self, surf, offset=(0,0)):
-        # pygame.draw.rect(surf, (255, 0, 0), self.rect)
         surf.blit(self.img, self.pos + offset)
+        # try:
+        #     pygame.draw.rect(surf, (100, 0, 0), self.rect)
+        # except KeyError: pass
 
     def __repr__(self):
         return f'<{self.name}>'

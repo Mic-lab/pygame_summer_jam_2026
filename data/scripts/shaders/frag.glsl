@@ -10,7 +10,7 @@ uniform float shakeTimer = -1.0;
 uniform float caTimer = -1.0;
 uniform float flashTimer = -1.0;
 uniform float restartTimer = -1.0;
-uniform vec2[8] beamCoords;
+uniform vec2[32] beamCoords;
 in vec2 uvs;
 out vec4 f_color;
 

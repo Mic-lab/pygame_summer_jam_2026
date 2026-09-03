@@ -14,7 +14,7 @@ class ShaderHandler:
 
     # Vec2 support only
     ARRAY_SIZES = {
-        'beamCoords': 8
+        'beamCoords': 32
             }
 
     def __init__(self):
