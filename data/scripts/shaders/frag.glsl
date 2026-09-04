@@ -12,6 +12,7 @@ uniform float caTimer = -1.0;
 uniform float flashTimer = -1.0;
 uniform float restartTimer = -1.0;
 uniform float hitTimer = -1.0;
+uniform float dmgBoostTimer = -1.0;
 uniform vec2[32] beamCoords;
 in vec2 uvs;
 out vec4 f_color;
@@ -164,6 +165,14 @@ void main() {
         // vec3 gray = vec3(f_color.r, 0, 0);
         float intensity = pow(hitTimer, 2);
         f_color.rgb = mix(f_color.rgb, gray, intensity);
+    }
+
+    // dmgBoostTimer
+    if (dmgBoostTimer > 0) {
+        float n = texture(perlinNoise, vec2(uvs.x*3, uvs.y) + vec2(0, time*0.001)).r;
+        // f_color.r *= 1 + dmgBoostTimer*(centerDist);
+        f_color.b *= 1 + dmgBoostTimer*(centerDist)*n;
+        f_color.rg *= 1 + 1.5*dmgBoostTimer*(-centerDist);
     }
 
     // Level Transition Timer

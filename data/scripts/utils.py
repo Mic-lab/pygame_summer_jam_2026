@@ -1,6 +1,7 @@
 # from .screen import screen
 import pygame
 import json
+import math
 from glob import glob
 
 def load_img(path, colorkey=(0, 0, 0)):
@@ -49,3 +50,7 @@ def pan_game_surf(current_size, current_ratio,
 def lerp(a, b, x):
     return a + (b - a) * x
 
+c4 = (2 * math.pi) / 3;
+def ease_out_elastic(x):
+    if x in (0, 1): return x
+    return (2 ** (-10 * x)) * math.sin((x * 10 - 0.75) * c4) + 1;

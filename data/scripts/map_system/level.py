@@ -3,6 +3,8 @@ from pathlib import Path
 from pygame import Vector2 as Vec2
 from . import tiles
 import copy
+from .. import utils
+from ..utils import lerp
 from .. import config
 from ..timer import Timer
 from ..font import fonts
@@ -815,8 +817,13 @@ class BossLevel(Level):
 
         self.timers = {
                 'invincibility': Timer(3*60, done=True),
-                'hit': Timer(120, done=True)
+                'hit': Timer(120, done=True),
+                'just_toggled_dmg_boost': Timer(60, done=True)
                 }
+
+        self.dmg_boost_timer = 0
+        self.dmg_boost = False
+        self.dmg_boost_surf = fonts['big'].get_surf('1.5x damage boost')
 
     def commence_win(self): pass
 
@@ -838,13 +845,22 @@ class BossLevel(Level):
                         )
             # self.boss_hp.change_val(-1)
 
+        # if self.slime_count >= self.NUM_SLIMES:
+        #     self.enable_dmg_boost()
+        # else:
+        #     self.enable_dmg_boost()
+
+        old_dmg_boost = self.dmg_boost
         self.dmg_boost = slime_count >= self.NUM_SLIMES
+        if not old_dmg_boost and self.dmg_boost:
+            self.timers['just_toggled_dmg_boost'].reset()
 
         new_bullets = []
         for bullet in self.bullets:
             bullet_output = bullet.update()
             if bullet_output.get('hit_boss'):
-                self.boss_hp.change_val(-2)
+                dmg = -3 if self.dmg_boost else -2
+                self.boss_hp.change_val(dmg)
             if bullet_output.get('dead'): continue
             new_bullets.append(bullet)
         self.bullets = new_bullets
@@ -858,6 +874,12 @@ class BossLevel(Level):
         
         for timer in self.timers.values():
             timer.update()
+        if self.dmg_boost:
+            self.dmg_boost_timer += 0.1
+            self.dmg_boost_timer = min(self.dmg_boost_timer, 1)
+        else:
+            self.dmg_boost_timer -= 0.1
+            self.dmg_boost_timer = max(self.dmg_boost_timer, 0)
 
     def detect_slime_beam_collision(self, game):
         beam_on_slime = False
@@ -924,5 +946,23 @@ class BossLevel(Level):
         surf.blit(fonts['regular'].get_surf(f'Player HP: {self.player_hp}'), (50, 50))
         for hp in self.hp_entities:
             hp.render(surf, offset=v)
+
+        if self.dmg_boost:
+            center = Vec2(config.GAME_SIZE[0]-130, 100)
+            x = utils.ease_out_elastic(self.timers['just_toggled_dmg_boost'].ratio)
+            print(x)
+            scale_x = lerp(0.5, 1, x)
+            scale_y = lerp(1.5, 1, x)
+            dmg_boost_surf = pygame.transform.scale(self.dmg_boost_surf, (self.dmg_boost_surf.get_width()*scale_x, self.dmg_boost_surf.get_height()*scale_y))
+            angle = lerp(90, 0, x)
+            dmg_boost_surf = pygame.transform.rotate(self.dmg_boost_surf, angle)
+            surf.blit(dmg_boost_surf, center - 0.5*Vec2(dmg_boost_surf.get_size()))
+
+        if self.restarting:
+            shader_handler.vars['caTimer'] = self.restart_timer.ratio*3
+        else:
+        #     shader_handler.vars['caTimer'] = 1-self.win_timer.ratio
+            shader_handler.vars['caTimer'] = self.dmg_boost_timer*1
+            shader_handler.vars['dmgBoostTimer'] = self.dmg_boost_timer*0.8
 
         shader_handler.vars['hitTimer'] = 1-self.timers['hit'].ratio
