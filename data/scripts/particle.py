@@ -81,6 +81,11 @@ class ParticleGenerator:
             'vel_randomness': 1.5,
             'rate': 40
         },
+        # 'smoke': {
+        #     'base_particle': lambda: Particle(action='smoke', vel=(0, -1), color=colors.RED),
+        #     'vel_randomness': 0.5,
+        #     'rate': 5
+        # },
     }
 
     @classmethod

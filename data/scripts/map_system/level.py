@@ -789,6 +789,8 @@ class Bullet:
 
 class BossLevel(Level):
 
+    NUM_SLIMES = 8
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.game_over = False
@@ -807,6 +809,10 @@ class BossLevel(Level):
                 self.attack_tiles[pos] = bg_tile
 
         self.player_hp = 3
+        self.hp_entities = []
+        for i in range(3):
+            self.hp_entities.append(Entity((config.GAME_SIZE[0]-110+i*32, 10), 'heart', action='full'))
+
         self.timers = {
                 'invincibility': Timer(3*60, done=True),
                 'hit': Timer(120, done=True)
@@ -819,9 +825,11 @@ class BossLevel(Level):
         self.screen_shake_vec = pygame.Vector2(self._screen_shake).rotate(random.randint(0, 359))
         self.final_offset = self.screen_shake_vec + self.offset
 
+        slime_count = 0
         for pos, attack_tile in self.attack_tiles.items():
             slime = self.fg_tiles.get(pos)
             if not slime: continue
+            slime_count += 1
 
             if attack_tile.attack_timer.done:
                 attack_tile.attack_timer.reset()
@@ -830,11 +838,13 @@ class BossLevel(Level):
                         )
             # self.boss_hp.change_val(-1)
 
+        self.dmg_boost = slime_count >= self.NUM_SLIMES
+
         new_bullets = []
         for bullet in self.bullets:
             bullet_output = bullet.update()
             if bullet_output.get('hit_boss'):
-                self.boss_hp.change_val(-1)
+                self.boss_hp.change_val(-2)
             if bullet_output.get('dead'): continue
             new_bullets.append(bullet)
         self.bullets = new_bullets
@@ -842,6 +852,9 @@ class BossLevel(Level):
         self.boss.update(game.game_map.level)
 
         self.detect_slime_beam_collision(game)
+
+        for hp in self.hp_entities:
+            hp.update()
         
         for timer in self.timers.values():
             timer.update()
@@ -879,6 +892,7 @@ class BossLevel(Level):
         if not self.timers['invincibility'].done: return
         sfx.sounds['hit.wav'].play()
         self.player_hp -= 1
+        self.hp_entities[self.player_hp].animation.set_action('empty')
         self.timers['invincibility'].reset()
         self.timers['hit'].reset()
 
@@ -908,4 +922,7 @@ class BossLevel(Level):
             bullet.render(surf, offset=self.final_offset)
 
         surf.blit(fonts['regular'].get_surf(f'Player HP: {self.player_hp}'), (50, 50))
+        for hp in self.hp_entities:
+            hp.render(surf, offset=v)
+
         shader_handler.vars['hitTimer'] = 1-self.timers['hit'].ratio

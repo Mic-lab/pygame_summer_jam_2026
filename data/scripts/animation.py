@@ -7,6 +7,9 @@ class Animation:
 
     ANIMATIONS_DIR = 'data/imgs/animations'
 
+    PINGPING_ANIMATIONS = {('heart', 'full'),}
+    STOP_ANIMATIONS = {('heart', 'empty'),}
+
     @staticmethod
     def load_spritesheet(config, spritesheet: pygame.Surface):
         frames_data = {}
@@ -113,6 +116,7 @@ class Animation:
         self.name = name
         self.size = Animation.animation_db[self.name]['size']
         self.action = None
+        self.reverse = False
         self.set_action(action, reset=True)
         if flip is None:
             flip = [False, False]
@@ -154,15 +158,34 @@ class Animation:
         self.game_frame += 1
         if self.game_frame > self.frame['duration']:
             self.game_frame = 0
-            self.animation_frame += 1
+
+            if self.reverse:
+                self.animation_frame -= 1
+            else:
+                self.animation_frame += 1
+
+            if self.reverse:
+                if self.animation_frame < 0:
+                    if (self.name, self.action) in self.PINGPING_ANIMATIONS:
+                        self.reverse = False
+                        self.animation_frame += 2
+
             if self.animation_frame >= len(self.frames):
-                self.animation_frame = 0
-                return True
+                if (self.name, self.action) in self.STOP_ANIMATIONS:
+                    self.animation_frame -= 1
+                    return True
+                if (self.name, self.action) in self.PINGPING_ANIMATIONS:
+                    self.reverse = True
+                    self.animation_frame -= 2
+                    return True
+                else:
+                    self.animation_frame = 0
+                    return True
 
     def set_action(self, new_action, reset=False):
         if self.action and new_action == self.action and not reset:
             return
-
+        self.reverse = False
         self.action = new_action
         self.animation_frame = 0
         self.game_frame = 0
