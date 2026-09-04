@@ -14,6 +14,7 @@ from ..mgl import shader_handler
 from ..particle import ParticleGenerator
 from ..entity import Entity
 from ..font import fonts
+from .. import colors
 import random
 
 SOLID_TILES = {"0"}
@@ -823,7 +824,12 @@ class BossLevel(Level):
 
         self.dmg_boost_timer = 0
         self.dmg_boost = False
-        self.dmg_boost_surf = fonts['big'].get_surf('1.5x damage boost')
+        s1 = fonts['big'].get_surf('ALL SLIMES ATTACKING')
+        s2 = fonts['big'].get_surf('2x Damage boost!', colors.RED)
+        self.dmg_boost_surf = pygame.Surface((150, 50))
+        self.dmg_boost_surf.set_colorkey((0, 0, 0))
+        self.dmg_boost_surf.blit(s1, (0, 0))
+        self.dmg_boost_surf.blit(s2, (20, 20))
 
     def commence_win(self): pass
 
@@ -948,14 +954,13 @@ class BossLevel(Level):
             hp.render(surf, offset=v)
 
         if self.dmg_boost:
-            center = Vec2(config.GAME_SIZE[0]-130, 100)
+            center = Vec2(config.GAME_SIZE[0]-70, 120)
             x = utils.ease_out_elastic(self.timers['just_toggled_dmg_boost'].ratio)
-            print(x)
-            scale_x = lerp(0.5, 1, x)
-            scale_y = lerp(1.5, 1, x)
+            scale_x = lerp(2, 1, x)
+            scale_y = lerp(0.5, 1, x)
             dmg_boost_surf = pygame.transform.scale(self.dmg_boost_surf, (self.dmg_boost_surf.get_width()*scale_x, self.dmg_boost_surf.get_height()*scale_y))
             angle = lerp(90, 0, x)
-            dmg_boost_surf = pygame.transform.rotate(self.dmg_boost_surf, angle)
+            dmg_boost_surf = pygame.transform.rotate(dmg_boost_surf, angle)
             surf.blit(dmg_boost_surf, center - 0.5*Vec2(dmg_boost_surf.get_size()))
 
         if self.restarting:
@@ -963,6 +968,6 @@ class BossLevel(Level):
         else:
         #     shader_handler.vars['caTimer'] = 1-self.win_timer.ratio
             shader_handler.vars['caTimer'] = self.dmg_boost_timer*1
-            shader_handler.vars['dmgBoostTimer'] = self.dmg_boost_timer*0.8
+            shader_handler.vars['dmgBoostTimer'] = self.dmg_boost_timer*0.5
 
         shader_handler.vars['hitTimer'] = 1-self.timers['hit'].ratio
