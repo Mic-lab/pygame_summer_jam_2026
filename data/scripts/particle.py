@@ -50,13 +50,17 @@ class Particle(PhysicsEntity):
     def copy(self):
         return deepcopy(self)
 
+def explosion_smoke_template():
+    color = random.randint(10, 255)
+    return Particle(action='basic', vel=(0, -0.75), color=(color, color, color))
+
 class ParticleGenerator:
 
     TEMPLATES = {
         'smoke': {
             'base_particle': lambda: Particle(action='basic', vel=(0, -1), color=colors.WHITE),
             'vel_randomness': 0.8,
-            'rate': 6
+            'rate': 8
         },
         'angle test': {
             'base_particle': lambda: Particle(action='arrow', vel=(0, -2), acceleration=(0, 0.05), angled=True, color=(50, 100, 240)),
@@ -71,6 +75,11 @@ class ParticleGenerator:
             'rate': 8,
             'inverse_rate': True,
             'duration': None,
+        },
+        'explosion smoke': {
+            'base_particle': explosion_smoke_template,
+            'vel_randomness': 1.5,
+            'rate': 40
         },
     }
 

@@ -320,7 +320,7 @@ class AttackTile(Tile):
             if not self.stepped_on:
                 level.play_sound('pressure_plate', suffix=f'_{random.randint(1,3)}.wav')
             super().on_stepped(level, tile)
-            self.animation.set_action('down')
+            level.fg_tiles[vector_to_key(self.grid_pos)].on_removal(level)
         else:
             if self.stepped_on:
                 self.on_stepped_released(level)
@@ -328,3 +328,18 @@ class AttackTile(Tile):
     def on_stepped_released(self, level):
         super().on_stepped_released(level)
         self.animation.set_action('up')
+
+class Mine(Tile):
+
+    def __init__(self, pos):
+        super().__init__(pos, 'mine', action='up', collides=False)
+
+    def on_stepped(self, level, tile):
+        if tile.weight > 1:
+            super().on_stepped(level, tile)
+            level.fg_tiles[vector_to_key(tile.grid_pos)].on_removal(level)
+            gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(tile.grid_pos)+0.5*Vec2(TILE_SIZE), 'explosion smoke')
+            level.particle_gens.append(gen)
+            level.shake_screen(4)
+            self.animation.set_action("debris")
+            self.collides=True
