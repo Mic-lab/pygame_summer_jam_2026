@@ -176,7 +176,7 @@ class PressurePlate(Tile):
 
     def __init__(self, pos):
         super().__init__(pos, 'pressure_plate', action='up', collides=False)
-
+        
     def on_stepped(self, level, tile):
         if tile.weight > 1:
             if not self.stepped_on:

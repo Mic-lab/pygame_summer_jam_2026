@@ -81,6 +81,7 @@ void main() {
         apply_lava_bloom = 0;
     }
 
+    // Lava bloom
     int bloom = 0;
     float dist = 0;
     float nx = texture(perlinNoise, uvs+vec2(time*0.00001)).r;
@@ -97,6 +98,21 @@ void main() {
     };
 
     f_color.rgb += vec3(1.00, 0.639, 0.247) * 0.2 * (1. - (dist / 5.)) * bloom * apply_lava_bloom;
+    
+    //shine
+    if (distance(f_color.rgb, vec3(0.000, 1.000, 0.000)) < 0.05) {
+        f_color.rgb = vec3(1.00, 0.639, 0.247);
+        for (float i = 0.0; i <= 1.5; i += 0.5) {
+            float progress = mod(time * 0.0001 + i, 2);
+            float band_pos = uvs.x + uvs.y;
+            bool draw_band = (abs(progress - band_pos) < 0.009);
+            f_color.rgb += vec3(1.0, 1.0, 1.0) * float(draw_band);
+
+            progress = mod(time * 0.0001 + 0.022 + i, 2);
+            draw_band = (abs(progress - band_pos) < 0.0027);
+            f_color.rgb += vec3(1.0, 1.0, 1.0) * float(draw_band);
+        };
+    };
 
     // Blurry shake
     if (shakeTimer >= 0) {
