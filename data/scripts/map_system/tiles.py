@@ -178,7 +178,11 @@ class Slime(Tile):
         level.particle_gens.append(gen)
         gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'slime')
         level.particle_gens.append(gen)
-        gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'dead regular slime')
+        if self.weight > 1:
+            particle = "dead heavy slime"
+        else:
+            particle = "dead regular slime"
+        gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), particle)
         level.particle_gens.append(gen)
 
 class PressurePlate(Tile):
@@ -244,6 +248,12 @@ class Spikes(Tile):
         gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
         level.particle_gens.append(gen)
         gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'slime')
+        level.particle_gens.append(gen)
+        if blocking_tile.weight > 1:
+            particle = "dead heavy slime"
+        else:
+            particle = "dead regular slime"
+        gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), particle)
         level.particle_gens.append(gen)
 
         return True  # Replace the slime with the spike

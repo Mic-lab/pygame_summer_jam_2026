@@ -50,6 +50,21 @@ class Particle(PhysicsEntity):
     def copy(self):
         return deepcopy(self)
 
+class SlimeCorpseParticle(Particle):
+    def __init__(self, pos=(0, 0), angled=False, color=None, *args, **kwargs):
+        super().__init__(pos, angled, color, *args, **kwargs)
+        self.rotation = 0
+
+    def update(self, *args, **kwargs):
+        self.vel.y += 0.25
+        self.rotation += 6
+        return super().update(*args, **kwargs)
+
+    def render(self, surf, offset=(0,0)):
+        surface = pygame.transform.rotate(self.img, self.rotation)
+        pos = (self.real_pos[0] + offset[0] + surface.width / 2, self.real_pos[1] + offset[1] + surface.height / 2)
+        surf.blit(surface, surface.get_rect(center=pos))
+
 def explosion_smoke_template():
     color = random.randint(10, 255)
     return Particle(action='smoke', vel=(0, -0.75), color=(color, color, color))
@@ -87,8 +102,12 @@ class ParticleGenerator:
             'rate':5
         },
         'dead regular slime': {
-            'base_particle': lambda: Particle(action="dead regular slime"),
-            'vel_randomness':0
+            'base_particle': lambda: SlimeCorpseParticle(action="dead regular slime", vel=(0, -5)),
+            'vel_randomness': 0
+        },
+        'dead heavy slime': {
+            'base_particle': lambda: SlimeCorpseParticle(action="dead heavy slime", vel=(0, -5)),
+            'vel_randomness': 0
         }
         # 'smoke': {
         #     'base_particle': lambda: Particle(action='smoke', vel=(0, -1), color=colors.RED),
