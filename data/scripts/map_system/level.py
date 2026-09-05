@@ -607,10 +607,13 @@ class Boss(Entity):
 
                 }
 
-        self.set_state({'idle':True}, duration=60*4)
+        self.set_state({'idle':True}, duration=60*6)
         self.warnings = []
 
         self.hit = False
+
+        self.explosions = []
+        self.dead = False
 
     def go_to(self, pos):
         self.real_pos += 0.05*((Vec2(pos) - self.animation.rect.topleft) - self.pos)
@@ -622,7 +625,7 @@ class Boss(Entity):
         self.first_state_frame = True
 
     def row_attack(self, level, attack):
-        self.set_state({'attack': attack}, duration=4*60)
+        self.set_state({'attack': attack}, duration=5*60)
         # return
         # attacked_row = None
         # slime_positions = random.sample(list(level.fg_tiles.keys()), len(level.fg_tiles))
@@ -646,7 +649,12 @@ class Boss(Entity):
 
     @property
     def is_pre_attack(self):
-        return self.state.get('attack') and self.state_timer.ratio < 0.5
+        return self.state.get('attack') and self.state_timer.ratio < 0.4
+
+    @property
+    def is_attacking(self):
+        r = self.state_timer.ratio
+        return self.state.get('attack') and (0.4 <= r < 0.9)
 
     @staticmethod
     def grid_to_px(grid_pos, level, center=True):
@@ -667,6 +675,7 @@ class Boss(Entity):
         return img
 
     def update(self, level):
+        if self.dead: return
         super().update()
 
         initial_first_state_frame = self.first_state_frame
@@ -682,7 +691,30 @@ class Boss(Entity):
                 
                 # attack = random.choice(('top_hard',))
                 self.row_attack(level, attack)
-                
+
+        elif self.state.get('dying'):
+            if self.state_timer.ratio < 0.7:
+                if self.state_timer.frame % 5 == 0:
+                    v = pygame.Vector2(random.randint(0, 30)).rotate(random.randint(0, 359))
+                    explosion = Entity((0,0), 'boss_boom', action='idle')
+                    explosion.real_pos = self.rect.center + v - 0.5*Vec2(explosion.rect.size)
+                    self.explosions.append(explosion)
+            elif self.state_timer.done:
+                did_big_boom = self.state.get('did_big_boom')
+                pygame.mixer_music.fadeout(1000)
+                if not did_big_boom:
+                    self.state['did_big_boom'] = True
+                    level.shake_screen(5)
+                    for i in range(6):
+                        v = pygame.Vector2(random.randint(0, 30)).rotate(random.randint(0, 359))
+                        explosion = Entity((0,0), 'boss_boom', action='idle')
+                        explosion.real_pos = self.rect.center + v - 0.5*Vec2(explosion.rect.size)
+                        self.explosions.append(explosion)
+
+            if not self.state_timer.done:
+                level.shake_screen(0.5)
+
+            self.dead = self.state_timer.done and not self.explosions
             
         elif attack_direction := self.state.get('attack'):
             attack_data = self.ATTACKS[attack_direction]
@@ -702,10 +734,12 @@ class Boss(Entity):
                         self.warnings.append(Entity(warning_pos_b, 'attack_warning', action='idle'))
 
                 for warning in self.warnings: warning.update()
-            else:
+            elif self.is_attacking:
                 self.warnings = []
                 for a, b in attack_data['beams']:
                     self.show_beam(a, b, level)
+            else:
+                pass
 
             if self.state_timer.done:
                 attacks = ['top', 'bottom', 'left', 'right']
@@ -713,30 +747,34 @@ class Boss(Entity):
                 attack = random.choice(attacks)
                 self.row_attack(level, attack)
 
-        # if level.boss_hit:
-        #     if self.animation.action != 'hit': self.last_animation_info = (self.animation.action, self.animation.game_frame, self.animation.animation_frame)
-        #     self.animation.set_action('hit')
-        # else:
-        #     if self.animation.action == 'hit':
-        #         if self.last_animation_info is not None:
-        #             print(self.last_animation_info)
-        #             self.animation.set_action(self.last_animation_info[0])
-        #             self.animation.game_frame = self.last_animation_info[1]
-        #             self.animation.animation_frame = self.last_animation_info[2]
-        #         else:
-        #             self.animation.set_action('idle')
         self.hit = level.boss_hit
 
         if initial_first_state_frame:
             self.first_state_frame = False
         self.state_timer.update()
 
+        new_explosions = []
+        for explosion in self.explosions:
+            done = explosion.update()
+            if done: continue
+            new_explosions.append(explosion)
+        self.explosions = new_explosions
+
+    def start_dying(self):
+        if 'dying' not in self.state:
+            self.set_state({'dying': True}, duration=120)
+
     def render(self, surf, **kwargs):
+        if self.dead: return
 
         shader_handler.vars['beamCoords'] = self.beam_coords
 
         
-        super().render(surf, **kwargs)
+        if 'did_big_boom' not in self.state:
+            super().render(surf, **kwargs)
+
+        for explosion in self.explosions:
+            explosion.render(surf)
         
         for warning in self.warnings:
             warning.render(surf)
@@ -767,6 +805,10 @@ class BossBar:
         self._val += val_change
         self._val = max(0, self._val)
         self.update_img()
+
+    @property
+    def val(self):
+        return self._val
 
     def render(self, surf, pos):
         surf.blit(self.img, pos)
@@ -844,7 +886,7 @@ class BossLevel(Level):
         boss.real_pos.x = center_coord.x
 
         self.boss = boss
-        self.boss_hp = BossBar(1500, 1500)
+        self.boss_hp = BossBar(1200, 1200)
         self.bullets = []
 
         self.attack_tiles = {}
@@ -879,17 +921,11 @@ class BossLevel(Level):
             if not slime: continue
             slime_count += 1
 
-            if attack_tile.attack_timer.done:
+            if attack_tile.attack_timer.done and not self.boss.dead:
                 attack_tile.attack_timer.reset()
                 self.bullets.append(
                         Bullet(slime.rect.center, self.boss, self)
                         )
-            # self.boss_hp.change_val(-1)
-
-        # if self.slime_count >= self.NUM_SLIMES:
-        #     self.enable_dmg_boost()
-        # else:
-        #     self.enable_dmg_boost()
 
         old_dmg_boost = self.dmg_boost
         self.dmg_boost = slime_count >= self.NUM_SLIMES
@@ -909,6 +945,9 @@ class BossLevel(Level):
             if bullet_output.get('dead'): continue
             new_bullets.append(bullet)
         self.bullets = new_bullets
+
+        if self.boss_hp.val <= 0:
+            self.boss.start_dying()
 
         self.boss.update(game.game_map.level)
 
