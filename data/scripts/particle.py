@@ -79,7 +79,8 @@ class ParticleGenerator:
         'explosion smoke': {
             'base_particle': explosion_smoke_template,
             'vel_randomness': 1.5,
-            'rate': 40
+            'rate': 40,
+            'duration': float('inf'),
         },
         # 'smoke': {
         #     'base_particle': lambda: Particle(action='smoke', vel=(0, -1), color=colors.RED),

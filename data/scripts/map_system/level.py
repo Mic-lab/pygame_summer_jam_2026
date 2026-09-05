@@ -314,6 +314,7 @@ class Level:
             self.restart()
 
     def restart(self):
+        self.play_sound('restart.wav')
         self.bg_tiles, self.fg_tiles, self.level_size = self.load_level(self.level_name)
         self.allow_restart = False
 
@@ -519,6 +520,8 @@ class Level:
             if surf_data[2] > 255: surf_data[2] = 255
             
         shader_handler.vars['restartTimer'] = self.restart_timer.ratio
+        shader_handler.vars['dmgBoostTimer'] = 0
+        shader_handler.vars['hitTimer'] = 0
 
         if self.restarting:
             shader_handler.vars['caTimer'] = self.restart_timer.ratio*3
@@ -609,6 +612,8 @@ class Boss(Entity):
         self.set_state({'idle':True}, duration=60*4)
         self.warnings = []
 
+        self.hit = False
+
     def go_to(self, pos):
         self.real_pos += 0.05*((Vec2(pos) - self.animation.rect.topleft) - self.pos)
 
@@ -653,6 +658,15 @@ class Boss(Entity):
             x, y = grid_pos[0]+0.5, grid_pos[1]+0.5
         return Vec2(config.TILE_SIZE[0] * x, config.TILE_SIZE[1] * y) + level.final_offset
 
+    @property
+    def img(self):
+        img = super().img
+        if self.hit:
+            mask_surf = pygame.mask.from_surface(img).to_surface()
+            mask_surf = utils.swap_colors(mask_surf, (255, 255, 255), colors.RED)
+            mask_surf.set_colorkey((0,0,0))
+            return mask_surf
+        return img
 
     def update(self, level):
         super().update()
@@ -700,6 +714,20 @@ class Boss(Entity):
                 attacks.remove(attack_direction)
                 attack = random.choice(attacks)
                 self.row_attack(level, attack)
+
+        # if level.boss_hit:
+        #     if self.animation.action != 'hit': self.last_animation_info = (self.animation.action, self.animation.game_frame, self.animation.animation_frame)
+        #     self.animation.set_action('hit')
+        # else:
+        #     if self.animation.action == 'hit':
+        #         if self.last_animation_info is not None:
+        #             print(self.last_animation_info)
+        #             self.animation.set_action(self.last_animation_info[0])
+        #             self.animation.game_frame = self.last_animation_info[1]
+        #             self.animation.animation_frame = self.last_animation_info[2]
+        #         else:
+        #             self.animation.set_action('idle')
+        self.hit = level.boss_hit
 
         if initial_first_state_frame:
             self.first_state_frame = False
@@ -794,16 +822,31 @@ class BossLevel(Level):
 
     NUM_SLIMES = 8
 
+    def restart(self):
+        super().restart()
+        self.sub_init()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.game_over = False
         self.offset += Vec2(0, 32)
+
+        s1 = fonts['big'].get_surf('ALL SLIMES ATTACKING')
+        s2 = fonts['big'].get_surf('2x Damage boost!', colors.RED)
+        self.dmg_boost_surf = pygame.Surface((150, 50))
+        self.dmg_boost_surf.set_colorkey((0, 0, 0))
+        self.dmg_boost_surf.blit(s1, (0, 0))
+        self.dmg_boost_surf.blit(s2, (20, 20))
+        
+        self.sub_init()
+
+    def sub_init(self):
         boss = Boss((0, 25), 'boss', 'flying')
         center_coord = (0.5*(config.GAME_SIZE-Vec2(boss.img.get_size())))
         boss.real_pos.x = center_coord.x
 
         self.boss = boss
-        self.boss_hp = BossBar(5_000, 5_000)
+        self.boss_hp = BossBar(1500, 1500)
         self.bullets = []
 
         self.attack_tiles = {}
@@ -824,12 +867,6 @@ class BossLevel(Level):
 
         self.dmg_boost_timer = 0
         self.dmg_boost = False
-        s1 = fonts['big'].get_surf('ALL SLIMES ATTACKING')
-        s2 = fonts['big'].get_surf('2x Damage boost!', colors.RED)
-        self.dmg_boost_surf = pygame.Surface((150, 50))
-        self.dmg_boost_surf.set_colorkey((0, 0, 0))
-        self.dmg_boost_surf.blit(s1, (0, 0))
-        self.dmg_boost_surf.blit(s2, (20, 20))
 
     def commence_win(self): pass
 
@@ -860,13 +897,17 @@ class BossLevel(Level):
         self.dmg_boost = slime_count >= self.NUM_SLIMES
         if not old_dmg_boost and self.dmg_boost:
             self.timers['just_toggled_dmg_boost'].reset()
+            self.play_sound('powerup.wav')
 
+        self.boss_hit = False
         new_bullets = []
         for bullet in self.bullets:
             bullet_output = bullet.update()
             if bullet_output.get('hit_boss'):
-                dmg = -3 if self.dmg_boost else -2
+                self.play_sound('boss_hit.wav')
+                dmg = -2 if self.dmg_boost else -1
                 self.boss_hp.change_val(dmg)
+                self.boss_hit = True
             if bullet_output.get('dead'): continue
             new_bullets.append(bullet)
         self.bullets = new_bullets
@@ -949,7 +990,6 @@ class BossLevel(Level):
         for bullet in self.bullets:
             bullet.render(surf, offset=self.final_offset)
 
-        surf.blit(fonts['regular'].get_surf(f'Player HP: {self.player_hp}'), (50, 50))
         for hp in self.hp_entities:
             hp.render(surf, offset=v)
 

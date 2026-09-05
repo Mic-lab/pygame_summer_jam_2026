@@ -34,6 +34,15 @@
     "spriteSourceSize": { "x": 5, "y": 16, "w": 104, "h": 79 },
     "sourceSize": { "w": 124, "h": 124 },
     "duration": 100
+   },
+   {
+    "filename": "hit",
+    "frame": { "x": 416, "y": 0, "w": 104, "h": 79 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 5, "y": 16, "w": 104, "h": 79 },
+    "sourceSize": { "w": 124, "h": 124 },
+    "duration": 50
    }
  ],
  "meta": {
@@ -41,7 +50,7 @@
   "version": "1.x-dev",
   "image": "boss.png",
   "format": "RGBA8888",
-  "size": { "w": 416, "h": 79 },
+  "size": { "w": 520, "h": 79 },
   "scale": "1",
   "slices": [
    { "name": "rect", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 43, "y": 44, "w": 24, "h": 24 } }] }

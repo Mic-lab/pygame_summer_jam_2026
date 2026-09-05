@@ -24,6 +24,8 @@ def load_sounds():
         v = 0.5
         if file.startswith('step'):
             v = 0.2
+        elif file.startswith('boss_hit'):
+            v = 0.3
 
         sound.set_volume(v)
 
