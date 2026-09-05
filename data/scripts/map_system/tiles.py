@@ -172,6 +172,15 @@ class Slime(Tile):
         level.play_sound(f'merge', f'_{random.randint(1, 3)}.wav')
         return True  # Give permission for the guy behind me to go
 
+    def on_removal(self, level):
+        super().on_removal(level)
+        gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
+        level.particle_gens.append(gen)
+        gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'slime')
+        level.particle_gens.append(gen)
+        gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'dead regular slime')
+        level.particle_gens.append(gen)
+
 class PressurePlate(Tile):
 
     def __init__(self, pos):
@@ -232,9 +241,11 @@ class Spikes(Tile):
 
     def on_fg_place_collision(self, level, blocking_tile):
         # When a slime stops the spike from rising up
-        level.particle_gens.append(
-                ParticleGenerator.from_template(self.rect.center, 'smoke')
-                )
+        gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
+        level.particle_gens.append(gen)
+        gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'slime')
+        level.particle_gens.append(gen)
+
         return True  # Replace the slime with the spike
 
 class Arrow(Tile):
@@ -253,15 +264,11 @@ class Arrow(Tile):
     def on_fg_move_collision(self, level, moving_tiles, desired_grid_pos):
         for moving_tile in moving_tiles:
             level.fg_tiles[moving_tile].on_removal(level)
-            gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(desired_grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
-            level.particle_gens.append(gen)
         return True
 
     def on_fg_contact(self, level, blocking_tile):
         if isinstance(blocking_tile, Slime):
             level.fg_tiles[vector_to_key(blocking_tile.grid_pos)].on_removal(level)
-            gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(blocking_tile.grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
-            level.particle_gens.append(gen)
             return True
         else:
             return False

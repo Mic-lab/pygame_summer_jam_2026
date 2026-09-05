@@ -348,13 +348,11 @@ class Level:
 
         # There's a fg tile on where I want to go
         if blocking_fg_tile := self.fg_tiles.get(desired_pos):
-            print(blocking_fg_tile)
             # Does it want to move?
             if desired_pos in self.current_to_desired_requests:
                 # Try to move it
                 tile_can_move = self._resolve_movement_request(desired_pos, self.current_to_desired_requests[desired_pos], visited)
             else:
-                print(True)
                 # It doesn't want to move
                 tile_can_move = False
             # If the other tile is able to move, then I can move

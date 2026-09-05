@@ -52,7 +52,7 @@ class Particle(PhysicsEntity):
 
 def explosion_smoke_template():
     color = random.randint(10, 255)
-    return Particle(action='basic', vel=(0, -0.75), color=(color, color, color))
+    return Particle(action='smoke', vel=(0, -0.75), color=(color, color, color))
 
 class ParticleGenerator:
 
@@ -78,9 +78,18 @@ class ParticleGenerator:
         },
         'explosion smoke': {
             'base_particle': explosion_smoke_template,
-            'vel_randomness': 1.5,
+            'vel_randomness': 0.8,
             'rate': 40,
         },
+        'slime': {
+            "base_particle": lambda: Particle(action="slime", vel=(0, -0.75)),
+            'vel_randomness': 0.8,
+            'rate':5
+        },
+        'dead regular slime': {
+            'base_particle': lambda: Particle(action="dead regular slime"),
+            'vel_randomness':0
+        }
         # 'smoke': {
         #     'base_particle': lambda: Particle(action='smoke', vel=(0, -1), color=colors.RED),
         #     'vel_randomness': 0.5,
@@ -94,9 +103,10 @@ class ParticleGenerator:
         config = config | overwrites  
         return cls(pos=pos, **config)
 
-    def __init__(self, base_particle: Particle, pos, vel_randomness=1, duration=1, rate=1, inverse_rate=False):
+    def __init__(self, base_particle: Particle, pos, vel_randomness=1, duration=1, rate=1, inverse_rate=False, floor=None):
         self.base_particle = base_particle
         self.pos = pos
+        self.floor = floor
         self.vel_randomness = vel_randomness
         self.duration = duration
         self.rate = rate
