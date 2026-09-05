@@ -39,6 +39,7 @@ vec2 normalizeScreenVec(vec2 v) {
 }
 
 void main() {
+    vec4 original_color = vec4(texture(canvasTex, uvs).rgb, 1.0);
     f_color = vec4(texture(canvasTex, uvs).rgb, 1.0);
 
     vec2 uvsS = vec2(uvs.x, uvs.y * screenSize.y/screenSize.x);
@@ -63,7 +64,7 @@ void main() {
 
     // Lava
     int apply_lava_bloom = 1;
-    if (distance(f_color.rgb, vec3(1.000, 0.000, 0.000)) < 0.05) {
+    if (distance(original_color.rgb, vec3(1.000, 0.000, 0.000)) < 0.05) {
         float scroll = time * 0.00002;
         vec2 noise_uvs = floor(uvs * screenSize) / screenSize;
         vec2 flow_1 = noise_uvs + vec2(sin(scroll), cos(scroll));
@@ -100,7 +101,7 @@ void main() {
     f_color.rgb += vec3(1.00, 0.639, 0.247) * 0.2 * (1. - (dist / 5.)) * bloom * apply_lava_bloom;
     
     //shine
-    if (distance(f_color.rgb, vec3(0.000, 1.000, 0.000)) < 0.05) {
+    if (distance(original_color.rgb, vec3(0.000, 1.000, 0.000)) < 0.05) {
         f_color.rgb = vec3(1.00, 0.639, 0.247);
         for (float i = 0.0; i <= 1.5; i += 0.5) {
             float progress = mod(time * 0.0001 + i, 2);

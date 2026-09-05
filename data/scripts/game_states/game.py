@@ -19,6 +19,7 @@ from ..map_system.level import Level, BossLevel
 class GameMap:
 
     LEVEL_NAMES = (
+            'tmp',
             'pre_boss',
             'boss',
             'bow_test',
@@ -26,7 +27,7 @@ class GameMap:
             'tutorial_0',
             'tutorial_1',
             'level_0',
-            'island_level',
+            'level_1',
             'level_2',
             'level_3',
             )
