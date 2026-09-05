@@ -62,7 +62,7 @@ class SlimeCorpseParticle(Particle):
 
     def render(self, surf, offset=(0,0)):
         surface = pygame.transform.rotate(self.img, self.rotation)
-        pos = (self.real_pos[0] + offset[0] + surface.width / 2, self.real_pos[1] + offset[1] + surface.height / 2)
+        pos = (self.real_pos[0] + offset[0] + 16, self.real_pos[1] + offset[1] + 16)
         surf.blit(surface, surface.get_rect(center=pos))
 
 def explosion_smoke_template():
