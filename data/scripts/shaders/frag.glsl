@@ -43,8 +43,8 @@ void main() {
     f_color = vec4(texture(canvasTex, uvs).rgb, 1.0);
 
     vec2 uvsS = vec2(uvs.x, uvs.y * screenSize.y/screenSize.x);
-    vec2 uvsSPx = vec2(floor(uvsS*screenSize.x)/screenSize.x);
-    vec2 uvsPx = vec2(floor(uvs*screenSize.x)/screenSize.x);
+    vec2 uvsPx = vec2(floor(uvs*screenSize)/screenSize);
+    vec2 uvsSPx = vec2(uvsPx.x, uvsPx.y * (screenSize.y/screenSize.x));
 
     float centerDist = distance(uvs, vec2(0.5, 0.5));
 
@@ -161,26 +161,20 @@ void main() {
             f_color *=3;
             f_color.rgb = mix(f_color.rgb, vec3(1, 0.7, 0.8), 0.4);
 
-            vec2 uvsStretched = uvs* vec2(
-                    mix(4, 1, abs(beamDirectionS.x)),
-                    mix(4, 1, abs(beamDirectionS.y))
+            vec2 uvsStretched = uvsPx * vec2(
+                    mix(1, 2, abs(beamDirectionS.x)),
+                    mix(1, 2, abs(beamDirectionS.y))
                     );
-            uvsStretched.y *= -1;  // I don't take the sign into account when
-                                   // using mix and all the lasers are either
-                                   // left-right or top-bottom. This
-                                   // compenstates.
 
-            // vec2 uvsStretched = uvs;
-
-            // First term ensures there's no obvious pattern between each beam
-            vec2 samplePos = 0.13*vec2(i) + uvsStretched + 0.0008*time*beamDirectionS;
+            // First term uses a non roundish value so that there's no obvious pattern between each beam
+            vec2 samplePos = 0.13*vec2(i) + uvsStretched + 0.0009*time*beamDirectionS;
             float beamNoise2 = texture(perlinNoise, samplePos).r;
 
             if (beamNoise2 > 0.4 && beamNoise2 < 0.6) {
                 f_color *= 1 + 0.5-(pow(noiseD*0.5*(1/0.013), 0.3));
             }
 
-            if (noiseD < 0.005) {
+            if (noiseD < 0.007) {
                 f_color *= 1.5;
             }
 
@@ -218,7 +212,9 @@ void main() {
         float n = texture(perlinNoise, vec2(uvs.x*3, uvs.y) + vec2(0, time*0.001)).r;
         // f_color.r *= 1 + dmgBoostTimer*(centerDist);
         f_color.b *= 1 + dmgBoostTimer*(centerDist)*n;
-        f_color.rg *= 1 + 1.5*dmgBoostTimer*(-centerDist);
+        // f_color.rg *= 1 + 1.5*dmgBoostTimer*(-centerDist);
+
+        f_color.rgb *= 1 + dmgBoostTimer*mix(1, -2, centerDist);
     }
 
     // Level Transition Timer
