@@ -150,7 +150,8 @@ class Level:
             "f": lambda x, y: tiles.Tile((x, y), "pot", action='idle'),
             "b": lambda x, y: tiles.Bow((x, y), "bow"),
             "x": lambda x, y: tiles.AttackTile((x, y)),
-            "m": lambda x, y: tiles.Mine((x, y))
+            "m": lambda x, y: tiles.Mine((x, y)),
+            "c": lambda x, y: tiles.Conveyor((x, y), 'right'),
             }
 
     FG_TILES = ('s', 'z')

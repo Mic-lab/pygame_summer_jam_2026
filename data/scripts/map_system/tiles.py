@@ -21,6 +21,7 @@ class Tile(Entity):
         self.stretch = Vec2(0)
         self.stretch_vel = Vec2(0)
         self.placement_priority = placement_priority
+        self.stepping_tile = None
 
     @property
     def end_pos(self):
@@ -87,10 +88,12 @@ class Tile(Entity):
         Return True if I still get placed."""
         return False
 
-    def on_stepped(self, level, blocking_tile):
+    def on_stepped(self, level, stepping_tile):
+        self.stepping_tile = stepping_tile
         self.stepped_on = True
 
     def on_stepped_released(self, level):
+        self.stepping_tile = None
         self.stepped_on = False
 
     def on_removal(self, level):
@@ -133,30 +136,38 @@ class Slime(Tile):
         super().__init__(*args, **kwargs)
         self.weight = weight
         self.move_timer = Timer(5, True)
+        self.enable_movement()
+
+    def disable_movement(self):
+        self.movement_enabled = False
+
+    def enable_movement(self):
+        self.movement_enabled = True
 
     def update(self, game):
         super().update(game)
 
         level = game.game_map.level
         
-        move_direction = None
-        for keys, looped_direction in Slime.DIRECTION_MAP.items():
-            for k in keys:
+        if self.movement_enabled:
+            move_direction = None
+            for keys, looped_direction in Slime.DIRECTION_MAP.items():
+                for k in keys:
 
-                if game.inputs['held'].get('left shift'):
-                    if game.inputs['held'].get(k) and self.move_timer.done:
-                        self.move_timer.reset()
+                    if game.inputs['held'].get('left shift'):
+                        if game.inputs['held'].get(k) and self.move_timer.done:
+                            self.move_timer.reset()
+                            move_direction = looped_direction
+                            break
+
+                    elif game.inputs['pressed'].get(k):
                         move_direction = looped_direction
                         break
 
-                elif game.inputs['pressed'].get(k):
-                    move_direction = looped_direction
-                    break
-
-        if move_direction:
-            level.notify_player_moved()
-            desired_pos = Vec2(self.grid_pos) + move_direction
-            level.request_fg_move(self.grid_pos, desired_pos)
+            if move_direction:
+                level.notify_player_moved()
+                desired_pos = Vec2(self.grid_pos) + move_direction
+                level.request_fg_move(self.grid_pos, desired_pos)
 
         self.move_timer.update()
     
@@ -361,3 +372,36 @@ class Mine(Tile):
             level.shake_screen(4)
             self.animation.set_action("debris")
             self.collides=True
+
+class Conveyor(Tile):
+
+    DIRECTION_MAP = {
+            'right': (1, 0),
+            'left': (-1, 0),
+            'up': (0, -1),
+            'down': (0, 1),
+            }
+
+    def __init__(self, pos, direction):
+        self.direction = direction
+        super().__init__(pos, 'conveyor', action=f'{direction} idle', collides=False)
+
+    def on_stepped(self, level, tile):
+        if isinstance(tile, Slime): tile.disable_movement()
+        return super().on_stepped(level, tile)
+
+    def on_stepped_released(self, level):
+        if isinstance(self.stepping_tile, Slime): self.stepping_tile.enable_movement()
+        return super().on_stepped_released(level)
+
+    def update(self, game):
+        level = game.game_map.level
+
+        if level.player_moved:
+            if self.stepping_tile:
+                desired_pos = Vec2(self.grid_pos) + self.DIRECTION_MAP[self.direction]
+                level.request_fg_move(self.grid_pos, desired_pos)
+
+        animation_done = super().update(game)
+        if self.animation.action.endswith('move'):
+            self.animation.set_action(f'{self.direction} idle')
