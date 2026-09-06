@@ -217,6 +217,8 @@ class Level:
         # NOTE: Swap happens after resolve_movement_requests
         swapped_pos  = self.vector_to_key(swapped_pos)
         self.fg_tiles[swapped_pos] = new_tile
+        self.bg_tiles[swapped_pos].on_stepped(self, new_tile)
+
 
     def request_bg_set(self, current_pos, tile):
         current_pos = self.vector_to_key(current_pos)

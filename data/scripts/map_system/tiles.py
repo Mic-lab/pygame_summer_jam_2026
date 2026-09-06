@@ -387,7 +387,17 @@ class Conveyor(Tile):
         super().__init__(pos, 'conveyor', action=f'{direction} idle', collides=False)
 
     def on_stepped(self, level, tile):
-        if isinstance(tile, Slime): tile.disable_movement()
+        print('conveyor on stepped')
+        if isinstance(tile, Slime):
+            print(f'disabling {tile} movement')
+            tile.disable_movement()
+
+        # Two slimes swapped places
+        if self.stepping_tile and (tile is not self.stepping_tile):
+            print('conveyor two slimes swapped places')
+            if isinstance(self.stepping_tile, Slime):
+                self.stepping_tile.enable_movement()
+
         return super().on_stepped(level, tile)
 
     def on_stepped_released(self, level):
