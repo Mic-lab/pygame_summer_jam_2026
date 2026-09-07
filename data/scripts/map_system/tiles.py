@@ -168,24 +168,56 @@ class Slime(Tile):
                         break
 
             if move_direction:
-                print(self, 'moving')
                 level.notify_player_moved()
                 desired_pos = Vec2(self.grid_pos) + move_direction
                 level.request_fg_move(self.grid_pos, desired_pos)
 
         self.move_timer.update()
-    
-    def on_fg_contact(self, level, blocking_tile):
-        if not isinstance(blocking_tile, Slime):
+
+    def can_merge(self, tile):
+        if not isinstance(tile, Slime):
             return False
-        if blocking_tile.weight > 1:
+        if tile.weight > 1:
             return False
         if self.weight > 1:
             return False
+        return True
+    
+    def on_fg_contact(self, level, blocking_tile):
+        if not self.can_merge(blocking_tile): return False
         level.request_fg_delete(self.grid_pos)
         level.request_swap(blocking_tile.grid_pos, Slime.init_heavy_slime(*blocking_tile.grid_pos))
         level.play_sound(f'merge', f'_{random.randint(1, 3)}.wav')
         return True  # Give permission for the guy behind me to go
+
+    def on_fg_move_collision(self, level, moving_tiles, desired_grid_pos):
+        if len(moving_tiles) != 2: return False
+        
+        # Attempt at making mergin work when conveyor slime and other slime move to the same tile
+        # if self is level.fg_tiles.get(moving_tiles[0]):
+        #     moving_tile_coord = moving_tiles[1]
+        # else:
+        #     moving_tile_coord = moving_tiles[0]
+        #
+        # moving_tile = level.fg_tiles[moving_tile_coord]
+        #
+        # if self.can_merge(moving_tile):
+        #     level.request_fg_delete(moving_tile_coord)
+        #     level.request_swap(self.grid_pos, Slime.init_heavy_slime(*self.grid_pos))
+        #     level.play_sound(f'merge', f'_{random.randint(1, 3)}.wav')
+        #     return True
+        # else:
+        #     return isinstance(level.bg_tiles[moving_tile_coord], Conveyor)
+
+        if self is level.fg_tiles.get(moving_tiles[0]):
+            moving_tile_coord = moving_tiles[1]
+        else:
+            moving_tile_coord = moving_tiles[0]
+
+        moving_tile = level.fg_tiles[moving_tile_coord]
+        # Give myself permission to go if the other slime is on conveyor
+        # So non conveyor slime has more priority
+        return isinstance(level.bg_tiles[moving_tile_coord], Conveyor)  
 
     def on_removal(self, level):
         super().on_removal(level)
