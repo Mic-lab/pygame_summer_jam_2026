@@ -23,6 +23,9 @@ class Tile(Entity):
         self.placement_priority = placement_priority
         self.stepping_tile = None
 
+    def __repr__(self):
+        return f'<{self.name},{self.grid_pos}>'
+
     @property
     def end_pos(self):
         return Vec2(self.grid_pos[0]*TILE_SIZE[0], self.grid_pos[1]*TILE_SIZE[1])
@@ -167,17 +170,76 @@ class Slime(Tile):
             if move_direction:
                 level.notify_player_moved()
                 desired_pos = Vec2(self.grid_pos) + move_direction
+                print(f'requesting to move {self}')
                 level.request_fg_move(self.grid_pos, desired_pos)
 
+
         self.move_timer.update()
+
+    def can_merge(self, level, other_tile):
+        # if vector_to_key(other_tile.grid_pos) in level.
+
+        potential_other_tile = level.swap_requests.get(vector_to_key(other_tile.grid_pos))
+        print(f'    {level.swap_requests=}')
+        if potential_other_tile: other_tile = potential_other_tile
+        print(f'{potential_other_tile=}')
+        print(f'{self.grid_pos=}')
+        self_future = level.swap_requests.get(vector_to_key(self.grid_pos))
+        print(f'{self_future=}')
+        if not self_future:
+            self_future = self
+        else:
+            self_future = self_future[0]
+        
+
+        if not isinstance(other_tile, Slime):
+            return False
+        if other_tile.weight > 1:
+            return False
+        if self_future.weight > 1:
+            return False
+        return True
+
+    def on_fg_move_collision(self, level, moving_tiles, desired_grid_pos):
+        print('move collision')
+        if len(moving_tiles) == 2:
+            if self is level.fg_tiles[moving_tiles[0]]:
+                print('im 0')
+                blocking_tile = level.fg_tiles[moving_tiles[1]]
+            else:
+                print('im 1')
+                blocking_tile = level.fg_tiles[moving_tiles[0]]
+
+            # if blocking_tile.grid_pos[0] == self.grid_pos[0] == desired_grid_pos[0]: return False
+            # if blocking_tile.grid_pos[1] == self.grid_pos[1] == desired_grid_pos[1]: return False
+            # print(self.grid_pos[0], self.grid_pos[0], desired_grid_pos[0])
+
+            print(f'Moving tiles {moving_tiles}')
+            # print(level.fg_tiles[moving_tiles[0]].grid_pos, level.fg_tiles[moving_tiles[1]].grid_pos)
+            # print(level.fg_tiles[moving_tiles[0]] is self, level.fg_tiles[moving_tiles[1]] is self)
+            if not self.can_merge(level, blocking_tile): return False
+            print(f'request fg delete for {self.grid_pos=}')
+            level.request_fg_delete(self.grid_pos)
+            print(f'request fg delete for {blocking_tile.grid_pos=}')
+            level.request_fg_delete(blocking_tile.grid_pos)
+            print(f'request swap for {desired_grid_pos=}')
+            level.request_swap(desired_grid_pos, Slime.init_heavy_slime(*desired_grid_pos))
+            level.play_sound(f'merge', f'_{random.randint(1, 3)}.wav')
+
+            # o -> <- o
+            if desired_grid_pos == blocking_tile.grid_pos:
+                return False
+            print(f'{self.grid_pos=} {blocking_tile.grid_pos=} {desired_grid_pos=}')
+            return True  # Give permission for the guy behind me to go
+
+        return False
     
     def on_fg_contact(self, level, blocking_tile):
-        if not isinstance(blocking_tile, Slime):
+        if not self.can_merge(level, blocking_tile):
+            print('cant merge')
+            print(f'{level.delete_requests=}')
             return False
-        if blocking_tile.weight > 1:
-            return False
-        if self.weight > 1:
-            return False
+        print(f'REQUESTING {self.grid_pos}')
         level.request_fg_delete(self.grid_pos)
         level.request_swap(blocking_tile.grid_pos, Slime.init_heavy_slime(*blocking_tile.grid_pos))
         level.play_sound(f'merge', f'_{random.randint(1, 3)}.wav')
@@ -387,14 +449,11 @@ class Conveyor(Tile):
         super().__init__(pos, 'conveyor', action=f'{direction} idle', collides=False)
 
     def on_stepped(self, level, tile):
-        print('conveyor on stepped')
         if isinstance(tile, Slime):
-            print(f'disabling {tile} movement')
             tile.disable_movement()
 
         # Two slimes swapped places
         if self.stepping_tile and (tile is not self.stepping_tile):
-            print('conveyor two slimes swapped places')
             if isinstance(self.stepping_tile, Slime):
                 self.stepping_tile.enable_movement()
 

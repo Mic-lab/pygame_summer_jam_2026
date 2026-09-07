@@ -169,6 +169,7 @@ class Level:
         self.current_to_desired_requests = {}
         self.delete_requests = set()
         self.fg_place_requests = {}
+        self.swap_requests = {}
         self.player_moved = False
         self.played_sounds = set()
 
@@ -211,13 +212,16 @@ class Level:
 
     def request_fg_delete(self, current_pos):
         current_pos = self.vector_to_key(current_pos)
+        print(f'adding {current_pos=}')
         self.delete_requests.add(current_pos)
 
     def request_swap(self, swapped_pos, new_tile):
         # NOTE: Swap happens after resolve_movement_requests
-        swapped_pos  = self.vector_to_key(swapped_pos)
-        self.fg_tiles[swapped_pos] = new_tile
-        self.bg_tiles[swapped_pos].on_stepped(self, new_tile)
+        key = self.vector_to_key(swapped_pos)
+        self.swap_requests.setdefault(key, [])
+        self.swap_requests[key].append(new_tile)
+        # self.fg_tiles[swapped_pos] = new_tile
+        # self.bg_tiles[swapped_pos].on_stepped(self, new_tile)
 
 
     def request_bg_set(self, current_pos, tile):
@@ -324,8 +328,13 @@ class Level:
     def _resolve_movement_request(self, current_pos, desired_pos, visited):
         """
         Returns True if it gives permission for other tiles to go to current_pos.
+
+        NOTE: Can be optimized by keeping track of the tiles that I went through
         """
-        # NOTE: Can be optimized by keeping track of the tiles that I went through
+        print(f'{current_pos=}')
+
+        if current_pos in self.delete_requests: return True
+
         tile = self.fg_tiles[current_pos]
 
         # Found a loop.
@@ -358,16 +367,30 @@ class Level:
             else:
                 # It doesn't want to move
                 tile_can_move = False
-            # If the other tile is able to move, then I can move
+
+
+            move_conflict = False
+            # If the other tile is able to move...
             if tile_can_move:
+                blocking_tile_desired_pos = self.current_to_desired_requests[desired_pos]
+                print(f'    {blocking_tile_desired_pos}=={tile.grid_pos}')
+                if blocking_tile_desired_pos == tiles.vector_to_key(tile.grid_pos):
+                    print('HANDLING MERGING BECAUSE o --> <-- o')
+                    handle_merging = True
+                    move_conflict = True
+                else:
+                    handle_merging = False
+            else:
+                handle_merging = True
+
+            if not handle_merging: return True
+
+            # have the tile handle merging into it
+            if not move_conflict and desired_pos in self.delete_requests:
+                print(f'    {desired_pos} is getting deleted')
                 return True
 
-            # Otherwise, have the tile handle merging into it
-            else:
-                if desired_pos in self.delete_requests:
-                    return True
-
-                return tile.on_fg_contact(self, blocking_fg_tile)
+            return tile.on_fg_contact(self, blocking_fg_tile)
 
         # Empty tile and no one wants to go to it.
         else:
@@ -391,6 +414,10 @@ class Level:
 
 
                 
+        if self.desired_to_current_requests:
+            print(self.desired_to_current_requests)
+            print(self.current_to_desired_requests)
+            print('-')
 
         # Handle movement
         accepted_movement_requests = {}
@@ -416,6 +443,15 @@ class Level:
             placed_tile.grid_pos = desired_pos
             # placed_tile.real_pos = (placed_tile.grid_pos[0]*config.TILE_SIZE[0], placed_tile.grid_pos[1]*config.TILE_SIZE[1])
             self.fg_tiles[desired_pos] = placed_tile
+
+        for swapped_pos, tiles in self.swap_requests.items():
+            if len(tiles) > 1: raise ValueError('Several swap requests for 1 tile')
+            new_tile = tiles[0]
+            new_tile.grid_pos = swapped_pos
+            self.fg_tiles[swapped_pos] = new_tile
+            self.bg_tiles[swapped_pos].on_stepped(self, new_tile)  # update the pressure plate 
+        self.swap_requests = {}
+
 
         if self.player_moved:
             sfx.sounds[f'step{random.randint(1, 5)}.wav'].play()
