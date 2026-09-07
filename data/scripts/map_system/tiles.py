@@ -23,6 +23,9 @@ class Tile(Entity):
         self.placement_priority = placement_priority
         self.stepping_tile = None
 
+    def __repr__(self):
+        return f'<{self.name},{self.grid_pos}>'
+
     @property
     def end_pos(self):
         return Vec2(self.grid_pos[0]*TILE_SIZE[0], self.grid_pos[1]*TILE_SIZE[1])
@@ -165,6 +168,7 @@ class Slime(Tile):
                         break
 
             if move_direction:
+                print(self, 'moving')
                 level.notify_player_moved()
                 desired_pos = Vec2(self.grid_pos) + move_direction
                 level.request_fg_move(self.grid_pos, desired_pos)
