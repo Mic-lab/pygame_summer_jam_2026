@@ -19,9 +19,9 @@ from ..map_system.level import Level, BossLevel
 class GameMap:
 
     LEVEL_NAMES = (
+            'bow_test',
             'pre_boss',
             'boss',
-            'bow_test',
 
             'tutorial_0',
             'tutorial_1',
@@ -62,7 +62,6 @@ class GameMap:
                 self.completed_transition = False
             self.level.update(game)
         else:
-            print(self.transition_timer, self.completed_transition)
             if self.transition_timer.ratio >= 0.5 and not self.completed_transition:
                 self.level_index += 1
                 self.load_level_from_index(game)
