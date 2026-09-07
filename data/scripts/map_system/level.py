@@ -81,7 +81,8 @@ def parse_spike_data(data:str):
 
 LEVEL_DATA_PARSER_DISPATCH = {
     "b": lambda x: Vec2(*map(int, x.split(","))),
-    "^": parse_spike_data
+    "^": parse_spike_data,
+    "c": lambda x: x.split(',')[-1]
 }
 
 def try_get_for_mapping(x:int, y:int, level:list[list]):
@@ -476,6 +477,10 @@ class Level:
                     elif c == "^":
                         data = level_data.get((x, y), {"state":"up", "triggers":[]})
                         bg_tiles[(x, y)] = tiles.Spikes((x, y), data["state"], data["triggers"])
+                    elif c == 'c':
+                        direction = level_data.get((x, y))
+                        if direction is None: direction = 'right'
+                        bg_tiles[(x, y)] = tiles.Conveyor((x, y), direction=direction)
                     elif c == ' ':
                         continue
                     else:

@@ -382,9 +382,26 @@ class Conveyor(Tile):
             'down': (0, 1),
             }
 
-    def __init__(self, pos, direction):
+    def __init__(self, pos, direction='right'):
         self.direction = direction
         super().__init__(pos, 'conveyor', action=f'{direction} idle', collides=False)
+
+        self._img = super().img
+
+        # base_img = super().img
+        # if self.direction == 'right':
+        #     self._img = base_img
+        # elif self.direction == 'left':
+        # self._img = pygame.transform.flip(base_img, True, False)
+        # elif direction == 'up':
+        #     self._img = pygame.transform.rotate(base_img, 90)
+        # elif direction == 'down':
+        #     self._img = pygame.transform.rotate(base_img, -90)
+
+
+    @property
+    def img(self):
+        return self._img
 
     def on_stepped(self, level, tile):
         if isinstance(tile, Slime):
