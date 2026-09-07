@@ -479,7 +479,10 @@ class Level:
                         bg_tiles[(x, y)] = tiles.Spikes((x, y), data["state"], data["triggers"])
                     elif c == 'c':
                         direction = level_data.get((x, y))
-                        if direction is None: direction = 'right'
+                        if direction is None:
+                            print(f'[WARNING] Could\'t find direction for conveyor at {(x, y)}')
+                            direction = 'right'
+
                         bg_tiles[(x, y)] = tiles.Conveyor((x, y), direction=direction)
                     elif c == ' ':
                         continue

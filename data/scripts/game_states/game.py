@@ -19,6 +19,7 @@ from ..map_system.level import Level, BossLevel
 class GameMap:
 
     LEVEL_NAMES = (
+            'conveyor_level_idea',
             'bow_test',
             'pre_boss',
             'boss',
