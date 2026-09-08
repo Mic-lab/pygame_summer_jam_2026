@@ -192,6 +192,8 @@ class Slime(Tile):
 
     def on_fg_move_collision(self, level, moving_tiles, desired_grid_pos):
         if len(moving_tiles) != 2: return False
+
+        return False
         
         # Attempt at making mergin work when conveyor slime and other slime move to the same tile
         # if self is level.fg_tiles.get(moving_tiles[0]):
