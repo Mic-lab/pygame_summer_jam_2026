@@ -640,7 +640,7 @@ class Boss(Entity):
         self.first_state_frame = True
 
     def row_attack(self, level, attack):
-        self.set_state({'attack': attack}, duration=5*60)
+        self.set_state({'attack': attack}, duration=6*60)
         # return
         # attacked_row = None
         # slime_positions = random.sample(list(level.fg_tiles.keys()), len(level.fg_tiles))
