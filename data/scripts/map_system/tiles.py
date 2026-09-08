@@ -422,8 +422,6 @@ class Conveyor(Tile):
         self.direction = direction
         super().__init__(pos, 'conveyor', action=f'{direction} idle', collides=False)
 
-        self._img = super().img
-
         # base_img = super().img
         # if self.direction == 'right':
         #     self._img = base_img
@@ -433,11 +431,6 @@ class Conveyor(Tile):
         #     self._img = pygame.transform.rotate(base_img, 90)
         # elif direction == 'down':
         #     self._img = pygame.transform.rotate(base_img, -90)
-
-
-    @property
-    def img(self):
-        return self._img
 
     def on_stepped(self, level, tile):
         if isinstance(tile, Slime):
@@ -451,6 +444,7 @@ class Conveyor(Tile):
         return super().on_stepped(level, tile)
 
     def on_stepped_released(self, level):
+        self.animation.set_action(f'{self.direction} move')
         if isinstance(self.stepping_tile, Slime): self.stepping_tile.enable_movement()
         return super().on_stepped_released(level)
 
@@ -463,5 +457,5 @@ class Conveyor(Tile):
                 level.request_fg_move(self.grid_pos, desired_pos)
 
         animation_done = super().update(game)
-        if self.animation.action.endswith('move'):
+        if self.animation.action.endswith('move') and animation_done:
             self.animation.set_action(f'{self.direction} idle')
