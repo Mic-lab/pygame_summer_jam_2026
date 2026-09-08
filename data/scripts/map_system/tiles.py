@@ -5,6 +5,7 @@ from ..particle import ParticleGenerator
 from pygame import Vector2 as Vec2
 import random
 import pygame
+import math
 
 def vector_to_key(vec):
     return (int(vec[0]), int(vec[1]))
@@ -260,14 +261,15 @@ class Spikes(Tile):
 
 class Arrow(Tile):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, direction:Vec2, *args, **kwargs):
         super().__init__(*args, **kwargs, allow_stretch=False)  # Arrow looks bad when it gets stretched
-    
+        self.direction = direction
+
     def update(self, game):
         super().update(game)
         level = game.game_map.level
         if level.player_moved:
-            level.request_fg_move(self.grid_pos, self.grid_pos+Vec2(1,0))
+            level.request_fg_move(self.grid_pos, self.grid_pos+self.direction)
             # import pprint
             # pprint.pprint(level.fg_tiles)
 
@@ -292,29 +294,42 @@ class Arrow(Tile):
     def on_fg_place_collision(self, level, blocking_tile):
         return self.on_fg_contact(level, blocking_tile)
 
+    def render(self, surf, offset=(0, 0)):
+        surface = pygame.transform.rotate(self.img, -math.degrees(math.atan2(self.direction.y, self.direction.x)))
+        pos = (self.real_pos[0] + offset[0] + 12, self.real_pos[1] + offset[1] + 12)
+        surf.blit(surface, surface.get_rect(center=pos))
+
 class Bow(Tile):
 
     def __init__(self, grid_pos, name, shoot_direction):
-        super().__init__(grid_pos, name, action='charging')
+        if shoot_direction.x == 1:
+            self.animation_direction = "right "
+        elif shoot_direction.x == -1:
+            self.animation_direction = "left "
+        elif shoot_direction.y == 1:
+            self.animation_direction = "down "
+        elif shoot_direction.y == -1:
+            self.animation_direction = "up "
+        super().__init__(grid_pos, name, action=self.animation_direction + 'charging')
         self.shoot_direction = shoot_direction
         self.charge()
 
     def charge(self):
         self.charged = True
-        self.animation.set_action('charging', reset=True)
+        self.animation.set_action(self.animation_direction + 'charging', reset=True)
 
     def shoot(self, level):
         arrow_grid_pos = self.grid_pos+self.shoot_direction
-        arrow = Arrow(arrow_grid_pos, 'arrow', action='idle')
+        arrow = Arrow(self.shoot_direction, arrow_grid_pos, 'arrow', action='idle')
         level.request_fg_place(arrow, arrow_grid_pos)
         self.charged = False
-        self.animation.set_action('shoot')
+        self.animation.set_action(self.animation_direction + 'shoot')
 
     def update(self, game):
-        animation_done = super().update
+        animation_done = super().update(game)
         level = game.game_map.level
-        if animation_done and self.animation.action == 'charging':
-            self.animation.set_action('charged')
+        if animation_done and self.animation.action == self.animation_direction + 'charging':
+            self.animation.set_action(self.animation_direction + 'charged')
 
         if level.player_moved:
             if self.charged:

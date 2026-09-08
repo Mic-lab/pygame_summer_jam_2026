@@ -17,7 +17,7 @@ from ..font import fonts
 from .. import colors
 import random
 
-SOLID_TILES = {"0"}
+SOLID_TILES = {"0", "b"}
 
 SOLID_TILE_MAPPINGS = [
     ("tile_16", set()),
@@ -94,7 +94,7 @@ def map_solid_tile(x:int, y:int, level:list[list]):
     neighbours = set()
     for x_offset, y_offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
         tile = try_get_for_mapping(x + x_offset, y + y_offset, level)
-        if tile != "0" and tile != None:
+        if tile not in SOLID_TILES and tile != None:
             neighbours.add((x_offset, y_offset))
 
     for tile_name, neighbour_map in SOLID_TILE_MAPPINGS:
@@ -148,7 +148,7 @@ class Level:
             "#": lambda x, y: tiles.Tile((x, y), "tile_33", collides=False),
             "@": lambda x, y: tiles.RotatedTile((x, y), "tile_32", collides=False),
             "f": lambda x, y: tiles.Tile((x, y), "pot", action='idle'),
-            "b": lambda x, y: tiles.Bow((x, y), "bow"),
+            "b": lambda x, y: tiles.Bow((x, y), "dispenser_tile"),
             "x": lambda x, y: tiles.AttackTile((x, y)),
             "m": lambda x, y: tiles.Mine((x, y))
             }
@@ -469,7 +469,7 @@ class Level:
                     elif c == "=":
                         bg_tiles[(x, y)] = map_cable_tiles(x, y, level)
                     elif c == "b":
-                        bg_tiles[(x, y)] = tiles.Bow((x, y), "bow", level_data[(x, y)])
+                        fg_tiles[(x, y)] = tiles.Bow((x, y), "dispenser_tile", level_data[(x, y)])
                     elif c == "^":
                         data = level_data.get((x, y), {"state":"up", "triggers":[]})
                         bg_tiles[(x, y)] = tiles.Spikes((x, y), data["state"], data["triggers"])
