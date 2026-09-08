@@ -81,7 +81,8 @@ def parse_spike_data(data:str):
 
 LEVEL_DATA_PARSER_DISPATCH = {
     "b": lambda x: Vec2(*map(int, x.split(","))),
-    "^": parse_spike_data
+    "^": parse_spike_data,
+    "c": lambda x: x.split(',')[-1]
 }
 
 def try_get_for_mapping(x:int, y:int, level:list[list]):
@@ -150,7 +151,8 @@ class Level:
             "f": lambda x, y: tiles.Tile((x, y), "pot", action='idle'),
             "b": lambda x, y: tiles.Bow((x, y), "dispenser_tile"),
             "x": lambda x, y: tiles.AttackTile((x, y)),
-            "m": lambda x, y: tiles.Mine((x, y))
+            "m": lambda x, y: tiles.Mine((x, y)),
+            "c": lambda x, y: tiles.Conveyor((x, y), 'right'),
             }
 
     FG_TILES = ('s', 'z')
@@ -199,6 +201,7 @@ class Level:
 
     def request_fg_move(self, current_pos, desired_pos):
         desired_pos, current_pos = self.vector_to_key(desired_pos), self.vector_to_key(current_pos)
+        if current_pos in self.current_to_desired_requests: return
         self.desired_to_current_requests.setdefault(desired_pos, [])
         self.desired_to_current_requests[desired_pos].append(current_pos)
         self.current_to_desired_requests[current_pos] = desired_pos
@@ -215,7 +218,10 @@ class Level:
     def request_swap(self, swapped_pos, new_tile):
         # NOTE: Swap happens after resolve_movement_requests
         swapped_pos  = self.vector_to_key(swapped_pos)
+        new_tile.grid_pos = swapped_pos
         self.fg_tiles[swapped_pos] = new_tile
+        self.bg_tiles[swapped_pos].on_stepped(self, new_tile)
+
 
     def request_bg_set(self, current_pos, tile):
         current_pos = self.vector_to_key(current_pos)
@@ -406,6 +412,7 @@ class Level:
         # position)
         pending_placements = {}
         for current_pos, desired_pos in accepted_movement_requests.items():
+            self.bg_tiles[current_pos].on_stepped_released(self)
             pending_placements[desired_pos] = self.fg_tiles.pop(current_pos)
         
         slime_moved = False
@@ -413,6 +420,7 @@ class Level:
             placed_tile.grid_pos = desired_pos
             # placed_tile.real_pos = (placed_tile.grid_pos[0]*config.TILE_SIZE[0], placed_tile.grid_pos[1]*config.TILE_SIZE[1])
             self.fg_tiles[desired_pos] = placed_tile
+            self.bg_tiles[desired_pos].on_stepped(self, placed_tile)
 
         if self.player_moved:
             sfx.sounds[f'step{random.randint(1, 5)}.wav'].play()
@@ -473,6 +481,13 @@ class Level:
                     elif c == "^":
                         data = level_data.get((x, y), {"state":"up", "triggers":[]})
                         bg_tiles[(x, y)] = tiles.Spikes((x, y), data["state"], data["triggers"])
+                    elif c == 'c':
+                        direction = level_data.get((x, y))
+                        if direction is None:
+                            print(f'[WARNING] Could\'t find direction for conveyor at {(x, y)}')
+                            direction = 'right'
+
+                        bg_tiles[(x, y)] = tiles.Conveyor((x, y), direction=direction)
                     elif c == ' ':
                         continue
                     else:

@@ -6,7 +6,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "right move",
@@ -15,7 +15,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 175
+    "duration": 60
    },
    {
     "filename": "right move",
@@ -24,7 +24,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "right move",
@@ -33,7 +33,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "right move",
@@ -42,7 +42,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "right move",
@@ -51,7 +51,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "down idle",
@@ -60,7 +60,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "down move",
@@ -69,7 +69,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 175
+    "duration": 60
    },
    {
     "filename": "down move",
@@ -78,7 +78,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "down move",
@@ -87,7 +87,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "down move",
@@ -96,7 +96,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "down move",
@@ -105,7 +105,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "left idle",
@@ -114,7 +114,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "left move",
@@ -123,7 +123,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 175
+    "duration": 60
    },
    {
     "filename": "left move",
@@ -132,7 +132,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "left move",
@@ -141,7 +141,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "left move",
@@ -150,7 +150,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "left move",
@@ -159,7 +159,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "up idle",
@@ -168,7 +168,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "up move",
@@ -177,7 +177,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 175
+    "duration": 60
    },
    {
     "filename": "up move",
@@ -186,7 +186,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "up move",
@@ -195,7 +195,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "up move",
@@ -204,7 +204,7 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    },
    {
     "filename": "up move",
@@ -213,30 +213,16 @@
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "sourceSize": { "w": 24, "h": 24 },
-    "duration": 100
+    "duration": 60
    }
  ],
  "meta": {
-  "app": "https://www.aseprite.org/",
-  "version": "1.3.18.3-dev",
+  "app": "http://www.aseprite.org/",
+  "version": "1.x-dev",
   "image": "conveyor.png",
   "format": "RGBA8888",
   "size": { "w": 576, "h": 24 },
   "scale": "1",
-  "frameTags": [
-   { "name": "right idle", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" },
-   { "name": "right move", "from": 1, "to": 5, "direction": "forward", "color": "#000000ff" },
-   { "name": "down idle", "from": 6, "to": 6, "direction": "forward", "color": "#000000ff" },
-   { "name": "down move", "from": 7, "to": 11, "direction": "forward", "color": "#000000ff" },
-   { "name": "left idle", "from": 12, "to": 12, "direction": "forward", "color": "#000000ff" },
-   { "name": "left move", "from": 13, "to": 17, "direction": "forward", "color": "#000000ff" },
-   { "name": "up idle", "from": 18, "to": 18, "direction": "forward", "color": "#000000ff" },
-   { "name": "up move", "from": 19, "to": 23, "direction": "forward", "color": "#000000ff" }
-  ],
-  "layers": [
-   { "name": "Layer 1", "opacity": 255, "blendMode": "normal" },
-   { "name": "Layer 2", "opacity": 255, "blendMode": "normal" }
-  ],
   "slices": [
   ]
  }

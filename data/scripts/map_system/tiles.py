@@ -22,6 +22,10 @@ class Tile(Entity):
         self.stretch = Vec2(0)
         self.stretch_vel = Vec2(0)
         self.placement_priority = placement_priority
+        self.stepping_tile = None
+
+    def __repr__(self):
+        return f'<{self.name},{self.grid_pos}>'
 
     @property
     def end_pos(self):
@@ -88,10 +92,12 @@ class Tile(Entity):
         Return True if I still get placed."""
         return False
 
-    def on_stepped(self, level, blocking_tile):
+    def on_stepped(self, level, stepping_tile):
+        self.stepping_tile = stepping_tile
         self.stepped_on = True
 
     def on_stepped_released(self, level):
+        self.stepping_tile = None
         self.stepped_on = False
 
     def on_removal(self, level):
@@ -134,44 +140,87 @@ class Slime(Tile):
         super().__init__(*args, **kwargs)
         self.weight = weight
         self.move_timer = Timer(5, True)
+        self.enable_movement()
+
+    def disable_movement(self):
+        self.movement_enabled = False
+
+    def enable_movement(self):
+        self.movement_enabled = True
 
     def update(self, game):
         super().update(game)
 
         level = game.game_map.level
         
-        move_direction = None
-        for keys, looped_direction in Slime.DIRECTION_MAP.items():
-            for k in keys:
+        if self.movement_enabled:
+            move_direction = None
+            for keys, looped_direction in Slime.DIRECTION_MAP.items():
+                for k in keys:
 
-                if game.inputs['held'].get('left shift'):
-                    if game.inputs['held'].get(k) and self.move_timer.done:
-                        self.move_timer.reset()
+                    if game.inputs['held'].get('left shift'):
+                        if game.inputs['held'].get(k) and self.move_timer.done:
+                            self.move_timer.reset()
+                            move_direction = looped_direction
+                            break
+
+                    elif game.inputs['pressed'].get(k):
                         move_direction = looped_direction
                         break
 
-                elif game.inputs['pressed'].get(k):
-                    move_direction = looped_direction
-                    break
-
-        if move_direction:
-            level.notify_player_moved()
-            desired_pos = Vec2(self.grid_pos) + move_direction
-            level.request_fg_move(self.grid_pos, desired_pos)
+            if move_direction:
+                level.notify_player_moved()
+                desired_pos = Vec2(self.grid_pos) + move_direction
+                level.request_fg_move(self.grid_pos, desired_pos)
 
         self.move_timer.update()
-    
-    def on_fg_contact(self, level, blocking_tile):
-        if not isinstance(blocking_tile, Slime):
+
+    def can_merge(self, tile):
+        if not isinstance(tile, Slime):
             return False
-        if blocking_tile.weight > 1:
+        if tile.weight > 1:
             return False
         if self.weight > 1:
             return False
+        return True
+    
+    def on_fg_contact(self, level, blocking_tile):
+        if not self.can_merge(blocking_tile): return False
         level.request_fg_delete(self.grid_pos)
         level.request_swap(blocking_tile.grid_pos, Slime.init_heavy_slime(*blocking_tile.grid_pos))
         level.play_sound(f'merge', f'_{random.randint(1, 3)}.wav')
         return True  # Give permission for the guy behind me to go
+
+    def on_fg_move_collision(self, level, moving_tiles, desired_grid_pos):
+        if len(moving_tiles) != 2: return False
+
+        return False
+        
+        # Attempt at making mergin work when conveyor slime and other slime move to the same tile
+        # if self is level.fg_tiles.get(moving_tiles[0]):
+        #     moving_tile_coord = moving_tiles[1]
+        # else:
+        #     moving_tile_coord = moving_tiles[0]
+        #
+        # moving_tile = level.fg_tiles[moving_tile_coord]
+        #
+        # if self.can_merge(moving_tile):
+        #     level.request_fg_delete(moving_tile_coord)
+        #     level.request_swap(self.grid_pos, Slime.init_heavy_slime(*self.grid_pos))
+        #     level.play_sound(f'merge', f'_{random.randint(1, 3)}.wav')
+        #     return True
+        # else:
+        #     return isinstance(level.bg_tiles[moving_tile_coord], Conveyor)
+
+        if self is level.fg_tiles.get(moving_tiles[0]):
+            moving_tile_coord = moving_tiles[1]
+        else:
+            moving_tile_coord = moving_tiles[0]
+
+        moving_tile = level.fg_tiles[moving_tile_coord]
+        # Give myself permission to go if the other slime is on conveyor
+        # So non conveyor slime has more priority
+        return isinstance(level.bg_tiles[moving_tile_coord], Conveyor)  
 
     def on_removal(self, level):
         super().on_removal(level)
@@ -376,3 +425,54 @@ class Mine(Tile):
             level.shake_screen(4)
             self.animation.set_action("debris")
             self.collides=True
+
+class Conveyor(Tile):
+
+    DIRECTION_MAP = {
+            'right': (1, 0),
+            'left': (-1, 0),
+            'up': (0, -1),
+            'down': (0, 1),
+            }
+
+    def __init__(self, pos, direction='right'):
+        self.direction = direction
+        super().__init__(pos, 'conveyor', action=f'{direction} idle', collides=False)
+
+        # base_img = super().img
+        # if self.direction == 'right':
+        #     self._img = base_img
+        # elif self.direction == 'left':
+        # self._img = pygame.transform.flip(base_img, True, False)
+        # elif direction == 'up':
+        #     self._img = pygame.transform.rotate(base_img, 90)
+        # elif direction == 'down':
+        #     self._img = pygame.transform.rotate(base_img, -90)
+
+    def on_stepped(self, level, tile):
+        if isinstance(tile, Slime):
+            tile.disable_movement()
+
+        # Two slimes swapped places
+        if self.stepping_tile and (tile is not self.stepping_tile):
+            if isinstance(self.stepping_tile, Slime):
+                self.stepping_tile.enable_movement()
+
+        return super().on_stepped(level, tile)
+
+    def on_stepped_released(self, level):
+        self.animation.set_action(f'{self.direction} move')
+        if isinstance(self.stepping_tile, Slime): self.stepping_tile.enable_movement()
+        return super().on_stepped_released(level)
+
+    def update(self, game):
+        level = game.game_map.level
+
+        if level.player_moved:
+            if self.stepping_tile:
+                desired_pos = Vec2(self.grid_pos) + self.DIRECTION_MAP[self.direction]
+                level.request_fg_move(self.grid_pos, desired_pos)
+
+        animation_done = super().update(game)
+        if self.animation.action.endswith('move') and animation_done:
+            self.animation.set_action(f'{self.direction} idle')
