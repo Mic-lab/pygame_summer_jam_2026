@@ -182,6 +182,12 @@ class Level:
         self.allow_restart = True
         self._screen_shake = 0
 
+        self.guy = Entity((10, 40), 'guy', action='idle')
+        self.start_timer = Timer(60)
+        self.dialogue_timer = Timer(1)
+        self.dialogue_played = None
+        self.dialogue_played_max = None
+
     def commence_win(self):
         sfx.sounds['level_complete.wav'].play()
         self.win = True
@@ -239,8 +245,16 @@ class Level:
 
     def add_surf(self, surf, pos, center_x=False, speed=1):
         pos = list(pos)
-        pos[0] = 0.5*config.GAME_SIZE[0]-surf.get_width()*0.5
+        if center_x: pos[0] = 0.5*config.GAME_SIZE[0]-surf.get_width()*0.5
         self.surfs.append([surf, pos, 0, speed])
+
+    def add_dialogue(self, text):
+        img = fonts['basic'].get_surf(text)
+        self.add_surf(img, (70, 50), speed=3)
+
+        self.dialogue_timer.reset()
+        self.dialogue_played = 0
+        self.dialogue_played_max = len(text.split())
 
     def get_player_tiles(self):
         # NOTE: Can be optimized
@@ -285,14 +299,16 @@ class Level:
                 'pre_boss': 'Remember, hold [shift] to move quickly.\nThis may be important soon...'
                 }
         
-        if self.level_name in start_dialogues and not self.added_surf:
-            img = fonts['basic'].get_surf(start_dialogues[self.level_name])
-            self.add_surf(img, (0, 40), center_x=True)
+        if self.level_name in start_dialogues and not self.added_surf and self.start_timer.ratio > 0.8:
+            # img = fonts['basic'].get_surf(start_dialogues[self.level_name])
+            # self.add_surf(img, (0, 40), center_x=True)
+            self.add_dialogue(start_dialogues[self.level_name])
             self.added_surf = True
 
         if self.pressed_pressure_plate and self.level_name == 'tutorial_0' and not self.added_surf:
-            img = fonts['basic'].get_surf(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
-            self.add_surf(img, (0, 40), center_x=True)
+            # img = fonts['basic'].get_surf(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
+            # self.add_surf(img, (0, 40), center_x=True)
+            self.add_dialogue(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
             self.added_surf = True
         # -------------------------------------- #
 
@@ -300,6 +316,21 @@ class Level:
         self.handle_requests(game)
 
         ParticleGenerator.update_generators(self.particle_gens)
+
+        self.guy.update()
+
+        if self.dialogue_played_max is not None:
+            if self.dialogue_played < self.dialogue_played_max:
+                self.guy.animation.set_action('talking')
+                if self.dialogue_timer.done:
+                    self.dialogue_timer = Timer(random.randint(5, 10))
+                    self.dialogue_played += 1
+                    sfx.sounds['talk_left.wav'].play()
+            else:
+                self.guy.animation.set_action('idle')
+
+        self.start_timer.update()
+        self.dialogue_timer.update()
 
         self._screen_shake *= 0.9
         if self._screen_shake < 0.3: self._screen_shake = 0
@@ -377,24 +408,6 @@ class Level:
             return True
 
     def handle_requests(self, game):
-
-        # Handle placement (arrow for example)
-        for place_pos, tiles in self.fg_place_requests.items():
-            if len(tiles) > 1:
-                placed_tile = max([(tile, tile.placement_priority) for tile in tiles])[0]
-            else:
-                placed_tile = tiles[0]
-            if blocking_tile := self.fg_tiles.get(place_pos):
-                replace_blocking_tile = placed_tile.on_fg_place_collision(self, blocking_tile)
-                if replace_blocking_tile:
-                    self.fg_tiles[place_pos] = placed_tile
-            else:
-                self.fg_tiles[place_pos] = placed_tile
-        self.fg_place_requests = {}
-
-
-                
-
         # Handle movement
         accepted_movement_requests = {}
         for current_pos, desired_pos in self.current_to_desired_requests.items():
@@ -427,6 +440,24 @@ class Level:
 
         self.current_to_desired_requests = {}
         self.desired_to_current_requests = {}
+
+        # Handle placement (arrow for example)
+        for place_pos, tiles in self.fg_place_requests.items():
+            if len(tiles) > 1:
+                placed_tile = max([(tile, tile.placement_priority) for tile in tiles])[0]
+            else:
+                placed_tile = tiles[0]
+            if blocking_tile := self.fg_tiles.get(place_pos):
+                replace_blocking_tile = placed_tile.on_fg_place_collision(self, blocking_tile)
+                if replace_blocking_tile:
+                    self.fg_tiles[place_pos] = placed_tile
+            else:
+                self.fg_tiles[place_pos] = placed_tile
+        self.fg_place_requests = {}
+
+
+                
+
 
     def load_level(self, level_name):
         bg_tiles = {}
@@ -523,11 +554,16 @@ class Level:
         for gen in self.particle_gens:
             gen.render(surf, offset=final_offset)
 
+        self.guy.render(surf, offset=v)
+
         for surf_data in self.surfs:
             looped_surf, pos, alpha, speed = surf_data
             ratio = alpha / 255
             looped_surf.set_alpha(alpha)
-            surf.blit(looped_surf, Vec2(pos) + (0, 30*(1-(min(2*ratio, 1)))**2))
+            if pos[0] > 100:
+                surf.blit(looped_surf, Vec2(pos) + (0, 30*(1-(min(2*ratio, 1)))**2))
+            else:
+                surf.blit(looped_surf, Vec2(pos) + (-30*(1-(min(2*ratio, 1)))**2, 0))
             
             surf_data[2] += speed
             if surf_data[2] > 255: surf_data[2] = 255

@@ -20,15 +20,20 @@ class GameMap:
 
     LEVEL_NAMES = (
             'bow_test',
-            'pre_boss',
-            'boss',
 
             'tutorial_0',
             'tutorial_1',
             'level_0',
             'level_1',
-            'level_2',
+            # 'level_2',
             'level_3',
+
+
+            'pre_boss',
+            'boss',
+
+
+
             )
 
     def __init__(self):
