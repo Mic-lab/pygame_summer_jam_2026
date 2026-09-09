@@ -27,7 +27,7 @@ class GameMap:
             'level_1',
             # 'level_2',
             'level_3',
-
+            'wide_lava_level',
 
             'pre_boss',
             'boss',
@@ -46,8 +46,7 @@ class GameMap:
     def load_level(self, level_name):
         if level_name == 'boss':
             self.level = BossLevel('boss')
-            # self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')
-            self.text_surf = fonts['basic'].get_surf(f'Boss')
+            self.text_surf = None
         else:
             self.level = Level(level_name)
             self.text_surf = fonts['basic'].get_surf(f'Level {self.level_index+1}/{len(self.LEVEL_NAMES)}')
@@ -76,7 +75,8 @@ class GameMap:
             self.transition_timer.update()
 
     def render(self, surf):
-        surf.blit(self.text_surf, Vec2(0.5*config.GAME_SIZE[0], 4) - (0.5*self.text_surf.get_width(), 0))
+        if self.text_surf: 
+            surf.blit(self.text_surf, Vec2(0.5*config.GAME_SIZE[0], 4) - (0.5*self.text_surf.get_width(), 0))
 
 
         shader_handler.vars['beamCoords'] = []

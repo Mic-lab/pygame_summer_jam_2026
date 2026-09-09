@@ -193,9 +193,9 @@ class Level:
         self.win = True
         self.win_timer.reset()
         self.shake_screen()
-        y = 20
+        y = 18
         self.add_surf(Animation.img_db['banner'], pos=(0, y), center_x=True, speed=3)
-        self.add_surf(fonts['basic'].get_surf('Level complete! Press <Enter> to continue', color=(255, 100, 255)), pos=(0, y), center_x=True, speed=3)
+        self.add_surf(fonts['basic'].get_surf('Level complete! Press [Enter] to continue', color=(255, 100, 255)), pos=(0, y), center_x=True, speed=3)
 
     def shake_screen(self, intensity=2):
         if intensity > self._screen_shake:
@@ -750,10 +750,13 @@ class Boss(Entity):
                     explosion = Entity((0,0), 'boss_boom', action='idle')
                     explosion.real_pos = self.rect.center + v - 0.5*Vec2(explosion.rect.size)
                     self.explosions.append(explosion)
+                    sfx.sounds['small_boom.wav'].play()
             elif self.state_timer.done:
                 did_big_boom = self.state.get('did_big_boom')
                 pygame.mixer_music.fadeout(1000)
                 if not did_big_boom:
+                    sfx.sounds['boom.wav'].set_volume(1)
+                    sfx.sounds['boom.wav'].play()
                     self.state['did_big_boom'] = True
                     level.shake_screen(5)
                     for i in range(6):
@@ -785,12 +788,21 @@ class Boss(Entity):
                         self.warnings.append(Entity(warning_pos_b, 'attack_warning', action='idle'))
 
                 for warning in self.warnings: warning.update()
+
+                self.first_attack_frame = True
+
             elif self.is_attacking:
+                if self.first_attack_frame:
+                    print('playing laser sound')
+                    pygame.Channel(0).play(sfx.sounds['laser.wav'])
+                    self.first_attack_frame = False
                 self.warnings = []
                 for a, b in attack_data['beams']:
                     self.show_beam(a, b, level)
             else:
-                pass
+                print('stopping')
+                pygame.Channel(0).fadeout(100)
+                # sfx.sounds['laser.wav'].set_volume(0)
 
             if self.state_timer.done:
                 attacks = ['top', 'bottom', 'left', 'right']
@@ -813,6 +825,7 @@ class Boss(Entity):
 
     def start_dying(self):
         if 'dying' not in self.state:
+            pygame.Channel(0).fadeout(100)
             self.set_state({'dying': True}, duration=120)
 
     def render(self, surf, **kwargs):
@@ -929,15 +942,16 @@ class BossLevel(Level):
         self.dmg_boost_surf.blit(s1, (0, 0))
         self.dmg_boost_surf.blit(s2, (20, 20))
         
+        self.end_timer = Timer(180, done=True)
         self.sub_init()
 
     def sub_init(self):
-        boss = Boss((0, 25), 'boss', 'flying')
+        boss = Boss((0, 35), 'boss', 'flying')
         center_coord = (0.5*(config.GAME_SIZE-Vec2(boss.img.get_size())))
         boss.real_pos.x = center_coord.x
 
         self.boss = boss
-        self.boss_hp = BossBar(1200, 1200)
+        self.boss_hp = BossBar(100, 1200)
         self.bullets = []
 
         self.attack_tiles = {}
@@ -1001,6 +1015,10 @@ class BossLevel(Level):
             self.boss.start_dying()
 
         self.boss.update(game.game_map.level)
+        if self.boss.dead:
+            if self.end_timer.done and not self.win:
+                super().commence_win()
+            self.end_timer.update()
 
         self.detect_slime_beam_collision(game)
 
@@ -1072,7 +1090,7 @@ class BossLevel(Level):
         super().render(surf)
         self.boss.render(surf, offset=v)
 
-        pos = v+(0.5*(config.GAME_SIZE[0] - self.boss_hp.img.get_width()), 20)
+        pos = v+(0.5*(config.GAME_SIZE[0] - self.boss_hp.img.get_width()), 40)
         self.boss_hp.render(surf, pos)
 
         for bullet in self.bullets:

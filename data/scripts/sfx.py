@@ -2,6 +2,7 @@ import os
 import pygame
 
 pygame.mixer.init()
+pygame.mixer.set_num_channels(8)
 
 SOUNDS_DIR = os.path.join('data/sfx/sounds')
 MUSIC_DIR = os.path.join('data/sfx/music')
@@ -26,6 +27,8 @@ def load_sounds():
             v = 0.2
         elif file.startswith('boss_hit'):
             v = 0.3
+        elif file.startswith('laser'):
+            v = 0.7
 
         sound.set_volume(v)
 
@@ -33,11 +36,7 @@ def load_sounds():
         sounds[file] = sound
     return sounds
 
-def init_custom_music():
-    pygame.mixer.set_reserved(0)
-
-def play_custom_music(sound, loops=-1):
-    pygame.mixer.Channel(0).play(sound, loops)
+pygame.mixer.set_reserved(0)
 
 sounds = load_sounds()
 
