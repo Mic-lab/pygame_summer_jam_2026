@@ -240,8 +240,22 @@ class Slime(Tile):
 
 class PressurePlate(Tile):
 
-    def __init__(self, pos):
+    def __init__(self, pos, triggers):
         super().__init__(pos, 'pressure_plate', action='up', collides=False)
+        self.triggers = triggers
+
+    def update(self, game):
+        level = game.game_map.level
+        triggered = any([level.bg_tiles[trigger_tile].stepped_on for trigger_tile in self.triggers])
+        if not self.stepped_on:
+            if triggered:
+                if self.animation.action != 'down':
+                    level.play_sound('pressure_plate', suffix=f'_{random.randint(1,3)}.wav')
+                    self.animation.set_action('down')
+            else:
+                self.animation.set_action('up')
+
+        return super().update(game)
         
     def on_stepped(self, level, tile):
         if tile.weight > 1:

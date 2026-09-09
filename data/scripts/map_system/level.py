@@ -82,7 +82,8 @@ def parse_spike_data(data:str):
 LEVEL_DATA_PARSER_DISPATCH = {
     "b": lambda x: Vec2(*map(int, x.split(","))),
     "^": parse_spike_data,
-    "c": lambda x: x.split(',')[-1]
+    "c": lambda x: x.split(',')[-1],
+    "p": lambda x: [(tuple(map(int, element.split(",")))) for element in x.split("/")]
 }
 
 def try_get_for_mapping(x:int, y:int, level:list[list]):
@@ -145,7 +146,6 @@ class Level:
             '.': lambda x, y: tiles.RotatedTile((x, y), 'tile_00', collides=False),
             's': lambda x, y: tiles.Slime.init_regular_slime(x, y),
             'z': lambda x, y: tiles.Slime.init_heavy_slime(x, y),
-            'p': lambda x, y: tiles.PressurePlate((x, y)),
             "#": lambda x, y: tiles.Tile((x, y), "tile_33", collides=False),
             "@": lambda x, y: tiles.RotatedTile((x, y), "tile_32", collides=False),
             "f": lambda x, y: tiles.Tile((x, y), "pot", action='idle'),
@@ -509,6 +509,7 @@ class Level:
                         bg_tiles[(x, y)] = map_cable_tiles(x, y, level)
                     elif c == "b":
                         fg_tiles[(x, y)] = tiles.Bow((x, y), "dispenser_tile", level_data[(x, y)])
+                        solid_tiles.append((x, y))
                     elif c == "^":
                         data = level_data.get((x, y), {"state":"up", "triggers":[]})
                         bg_tiles[(x, y)] = tiles.Spikes((x, y), data["state"], data["triggers"])
@@ -517,8 +518,9 @@ class Level:
                         if direction is None:
                             print(f'[WARNING] Could\'t find direction for conveyor at {(x, y)}')
                             direction = 'right'
-
                         bg_tiles[(x, y)] = tiles.Conveyor((x, y), direction=direction)
+                    elif c == 'p':
+                        bg_tiles[(x, y)] = tiles.PressurePlate((x, y), level_data.get((x, y), []))
                     elif c == ' ':
                         continue
                     else:
