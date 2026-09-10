@@ -1,101 +1,20 @@
 { "frames": [
    {
-    "filename": "",
-    "frame": { "x": 0, "y": 0, "w": 32, "h": 53 },
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
-    "duration": 100
-   },
-   {
-    "filename": "",
-    "frame": { "x": 32, "y": 0, "w": 32, "h": 53 },
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
-    "duration": 100
-   },
-   {
-    "filename": "",
-    "frame": { "x": 64, "y": 0, "w": 32, "h": 53 },
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
-    "duration": 100
-   },
-   {
-    "filename": "",
-    "frame": { "x": 96, "y": 0, "w": 32, "h": 53 },
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
-    "duration": 100
-   },
-   {
-    "filename": "",
-    "frame": { "x": 128, "y": 0, "w": 32, "h": 53 },
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
-    "duration": 100
-   },
-   {
-    "filename": "",
-    "frame": { "x": 160, "y": 0, "w": 32, "h": 53 },
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
-    "duration": 100
-   },
-   {
-    "filename": "",
-    "frame": { "x": 192, "y": 0, "w": 32, "h": 53 },
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
-    "duration": 100
-   },
-   {
-    "filename": "",
-    "frame": { "x": 224, "y": 0, "w": 32, "h": 53 },
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
-    "duration": 100
-   },
-   {
-    "filename": "",
-    "frame": { "x": 256, "y": 0, "w": 32, "h": 53 },
-    "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
-    "duration": 100
-   },
-   {
     "filename": "idle",
-    "frame": { "x": 288, "y": 0, "w": 32, "h": 53 },
+    "frame": { "x": 0, "y": 0, "w": 15, "h": 262 },
     "rotated": false,
     "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
+    "spriteSourceSize": { "x": 45, "y": 0, "w": 15, "h": 262 },
+    "sourceSize": { "w": 106, "h": 297 },
     "duration": 100
    },
    {
     "filename": "talking",
-    "frame": { "x": 320, "y": 0, "w": 32, "h": 53 },
+    "frame": { "x": 15, "y": 0, "w": 15, "h": 262 },
     "rotated": false,
     "trimmed": true,
-    "spriteSourceSize": { "x": 29, "y": 18, "w": 32, "h": 53 },
-    "sourceSize": { "w": 106, "h": 96 },
+    "spriteSourceSize": { "x": 45, "y": 0, "w": 15, "h": 262 },
+    "sourceSize": { "w": 106, "h": 297 },
     "duration": 100
    }
  ],
@@ -104,9 +23,10 @@
   "version": "1.x-dev",
   "image": "guy.png",
   "format": "RGBA8888",
-  "size": { "w": 352, "h": 53 },
+  "size": { "w": 30, "h": 262 },
   "scale": "1",
   "slices": [
+   { "name": "rect", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 41, "y": 239, "w": 24, "h": 24 } }] }
   ]
  }
 }

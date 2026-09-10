@@ -183,13 +183,15 @@ class Level:
         self.allow_restart = True
         self._screen_shake = 0
 
-        self.guy = Entity((10, 40), 'guy', action='idle')
-        self.start_timer = Timer(60)
+        self.GUY_POS = (25, 53)
+        self.guy = Entity(self.GUY_POS, 'guy', action='idle')
+        self.start_timer = Timer(1000)
         self.dialogue_timer = Timer(1)
         self.dialogue_played = None
         self.dialogue_played_max = None
 
     def commence_win(self):
+        if self.level_name == 'end': return
         sfx.sounds['level_complete.wav'].play()
         self.win = True
         self.win_timer.reset()
@@ -249,9 +251,9 @@ class Level:
         if center_x: pos[0] = 0.5*config.GAME_SIZE[0]-surf.get_width()*0.5
         self.surfs.append([surf, pos, 0, speed])
 
-    def add_dialogue(self, text):
+    def add_dialogue(self, text,pos=(70, 50)):
         img = fonts['basic'].get_surf(text)
-        self.add_surf(img, (70, 50), speed=3)
+        self.add_surf(img, pos, speed=3)
 
         self.dialogue_timer.reset()
         self.dialogue_played = 0
@@ -297,10 +299,10 @@ class Level:
                 'tutorial_1': 'This\'ll be a bit difficult...',
                 'level_0': 'Hold [r] to restart',
                 'level_3': 'Good luck!',
-                'pre_boss': 'Remember, hold [shift] to move quickly.\nThis may be important soon...'
+                'pre_boss': 'Remember, hold [shift] to move quickly.\nThis may be important soon...',
                 }
         
-        if self.level_name in start_dialogues and not self.added_surf and self.start_timer.ratio > 0.8:
+        if self.level_name in start_dialogues and not self.added_surf and self.start_timer.frame > 30:
             # img = fonts['basic'].get_surf(start_dialogues[self.level_name])
             # self.add_surf(img, (0, 40), center_x=True)
             self.add_dialogue(start_dialogues[self.level_name])
@@ -311,6 +313,20 @@ class Level:
             # self.add_surf(img, (0, 40), center_x=True)
             self.add_dialogue(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
             self.added_surf = True
+
+        if self.level_name == 'end':
+
+            if self.start_timer.frame > 50:
+                end = config.GAME_SIZE[0]*0.5 - 0.5*(self.guy.rect.w)
+
+                self.guy.real_pos[0] = lerp(self.GUY_POS[0], end, ease_in_out_cubic(min((self.start_timer.frame-50)/100, 1)))
+                # self.guy.real_pos[0] +=   0.04*()
+
+            if not self.added_surf and self.start_timer.frame > 250:
+                self.add_dialogue('Thanks for playing!', pos=(config.GAME_SIZE[0]*0.5+10, 50))
+                self.added_surf = True
+                self.win_timer.reset()
+
         # -------------------------------------- #
 
         self.played_sounds = set()
@@ -326,7 +342,11 @@ class Level:
                 if self.dialogue_timer.done:
                     self.dialogue_timer = Timer(random.randint(5, 10))
                     self.dialogue_played += 1
-                    sfx.sounds['talk_left.wav'].play()
+                    if self.guy.pos[0] > 200:
+                        sfx.sounds['talk.wav'].play()
+                    else:
+                        sfx.sounds['talk_left.wav'].play()
+
             else:
                 self.guy.animation.set_action('idle')
 
@@ -557,7 +577,9 @@ class Level:
         for gen in self.particle_gens:
             gen.render(surf, offset=final_offset)
 
-        self.guy.render(surf, offset=v)
+        # self.guy.render(surf, offset=v)
+        guy_offset = -Vec2(self.guy.animation.rect.topleft)
+        self.guy.render(surf, offset=guy_offset)
 
         for surf_data in self.surfs:
             looped_surf, pos, alpha, speed = surf_data
@@ -1094,14 +1116,14 @@ class BossLevel(Level):
         super().render(surf)
         self.boss.render(surf, offset=v)
 
-        pos = v+(0.5*(config.GAME_SIZE[0] - self.boss_hp.img.get_width()), 40)
+        pos = (0.5*(config.GAME_SIZE[0] - self.boss_hp.img.get_width()), 40)
         self.boss_hp.render(surf, pos)
 
         for bullet in self.bullets:
             bullet.render(surf, offset=self.final_offset)
 
         for hp in self.hp_entities:
-            hp.render(surf, offset=v)
+            hp.render(surf)
 
         if self.dmg_boost:
             center = Vec2(config.GAME_SIZE[0]-70, 120)
@@ -1121,3 +1143,6 @@ class BossLevel(Level):
             shader_handler.vars['dmgBoostTimer'] = self.dmg_boost_timer*0.5
 
         shader_handler.vars['hitTimer'] = 1-self.timers['hit'].ratio
+
+def ease_in_out_cubic(x):
+    return 4 * x**3 if x < 0.5 else 1 - ((-2 * x + 2) ** 3) / 2
