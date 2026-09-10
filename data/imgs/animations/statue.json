@@ -1,0 +1,23 @@
+{ "frames": [
+   {
+    "filename": "idle",
+    "frame": { "x": 0, "y": 0, "w": 24, "h": 37 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 37 },
+    "sourceSize": { "w": 24, "h": 37 },
+    "duration": 100
+   }
+ ],
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.x-dev",
+  "image": "statue.png",
+  "format": "RGBA8888",
+  "size": { "w": 24, "h": 37 },
+  "scale": "1",
+  "slices": [
+   { "name": "rect", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 13, "w": 24, "h": 24 } }] }
+  ]
+ }
+}

@@ -2,6 +2,7 @@ import pygame
 import colorsys
 from copy import deepcopy
 from .font import fonts
+from . import colors
 from . import sfx
 
 class Button:
@@ -13,9 +14,9 @@ class Button:
                        'text': [127, 235, 144]}
         },
         'basic': {
-            'colors': {'border': [91, 77, 76], 
-                       'fill': [151, 134, 125], 
-                       'text': [240, 240, 240] }
+            'colors': {'border': colors.PURPLE_2, 
+                       'fill': colors.PURPLE_1, 
+                       'text': colors.WHITE }
         },
     }
     

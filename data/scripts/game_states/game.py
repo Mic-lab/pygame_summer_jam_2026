@@ -19,14 +19,21 @@ from ..map_system.level import Level, BossLevel
 class GameMap:
 
     LEVEL_NAMES = (
-            'bow_test',
+            # 'bow_test',
 
             'tutorial_0',
+            'tutorial_0.5',
             'tutorial_1',
             'level_0',
             'level_1',
             # 'level_2',
             'level_3',
+
+            'mine_0',
+            'mine_1',
+            'mine_2',
+
+
             'wide_lava_level',
 
             'pre_boss',
@@ -39,8 +46,7 @@ class GameMap:
     def __init__(self):
         self.level_index = 0
         self.transition_timer = Timer(20, done=True)
-        # pygame.mixer_music.set_volume(0.4)
-        pygame.mixer_music.set_volume(0.0)
+        pygame.mixer_music.set_volume(0.4)
         sfx.play_music('song.wav', loops=-1)
 
     def load_level(self, level_name):

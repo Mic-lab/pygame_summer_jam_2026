@@ -25,7 +25,7 @@ class GameHandler:
         self.clock = pygame.time.Clock()
         self.inputs = {'pressed': {}, 'released': {}, 'held': {}}
         self.set_state(self.states.Menu)
-        self.set_state(self.states.Game)
+        # self.set_state(self.states.Game)
         self.transition = Transition()
 
     def set_canvas_size(self, size):
