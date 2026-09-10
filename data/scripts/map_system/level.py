@@ -1013,6 +1013,7 @@ class BossLevel(Level):
             new_bullets.append(bullet)
         self.bullets = new_bullets
 
+        self.boss_hp.change_val(-1)
         if self.boss_hp.val <= 0:
             self.boss.start_dying()
 
