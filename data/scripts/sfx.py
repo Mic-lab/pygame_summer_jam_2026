@@ -28,7 +28,7 @@ def load_sounds():
         elif file.startswith('boss_hit'):
             v = 0.3
         elif file.startswith('laser'):
-            v = 0.7
+            v = 0.4
 
         sound.set_volume(v)
 

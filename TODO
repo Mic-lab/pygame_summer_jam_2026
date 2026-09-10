@@ -1,17 +1,13 @@
 Content
-    - boss
-        - damage boost if every slime is standing on attack tile
-            - change bullet color and put post process effect
-        - After dying, show random dialogue. Gremlin that says "Yikes..." or something like that.
-        - intro (only show first time)
-
+    - Room before before boss, put an excessive amount of statues
+    - After dying, show random dialogue. Puppet that says "Yikes..." or something like that.
 
 Polish
     / slimes do a move animation with stretch
-        ~ Mayve move all slimes  at different starting times
-    - sfx
-    / level transition
+        ~ Maybe move all slimes  at different starting times
+    ~ sfx
 
 QOL
-    / hold a button to move fast on hold
 
+
+**Make sure enter doesn't work when level isn't complete

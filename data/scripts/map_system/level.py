@@ -319,13 +319,15 @@ class Level:
             if self.start_timer.frame > 50:
                 end = config.GAME_SIZE[0]*0.5 - 0.5*(self.guy.rect.w)
 
-                self.guy.real_pos[0] = lerp(self.GUY_POS[0], end, ease_in_out_cubic(min((self.start_timer.frame-50)/100, 1)))
+                self.guy.real_pos[0] = lerp(self.GUY_POS[0], end, ease_in_out_cubic(min((self.start_timer.frame-50)/120, 1)))
                 # self.guy.real_pos[0] +=   0.04*()
 
             if not self.added_surf and self.start_timer.frame > 250:
                 self.add_dialogue('Thanks for playing!', pos=(config.GAME_SIZE[0]*0.5+10, 50))
                 self.added_surf = True
                 self.win_timer.reset()
+                pygame.mixer_music.set_volume(0.8)
+                sfx.play_music('end_song.wav', loops=-1)
 
         # -------------------------------------- #
 
@@ -683,7 +685,7 @@ class Boss(Entity):
 
                 }
 
-        self.set_state({'idle':True}, duration=60*6)
+        self.set_state({'idle':True}, duration=60*3)
         self.warnings = []
 
         self.hit = False
@@ -852,6 +854,7 @@ class Boss(Entity):
         if 'dying' not in self.state:
             pygame.Channel(0).fadeout(100)
             self.set_state({'dying': True}, duration=120)
+            pygame.mixer_music.fadeout(100)
 
     def render(self, surf, **kwargs):
         if self.dead: return
@@ -967,10 +970,15 @@ class BossLevel(Level):
         self.dmg_boost_surf.blit(s1, (0, 0))
         self.dmg_boost_surf.blit(s2, (20, 20))
         
-        self.end_timer = Timer(180, done=True)
+        self.end_timer = Timer(60, done=False)
         self.sub_init()
 
     def sub_init(self):
+        pygame.mixer.stop()
+
+        pygame.mixer_music.set_volume(0.6)
+        sfx.play_music('boss_intro.wav')
+
         boss = Boss((0, 35), 'boss', 'flying')
         center_coord = (0.5*(config.GAME_SIZE-Vec2(boss.img.get_size())))
         boss.real_pos.x = center_coord.x
@@ -1002,6 +1010,10 @@ class BossLevel(Level):
 
     def update(self, game):
         super().update(game)
+
+        if not pygame.mixer.music.get_busy() and not 'dying' in self.boss.state:
+            sfx.play_music('boss_loop.wav', loops=-1)
+
         self.screen_shake_vec = pygame.Vector2(self._screen_shake).rotate(random.randint(0, 359))
         self.final_offset = self.screen_shake_vec + self.offset
 
@@ -1036,7 +1048,7 @@ class BossLevel(Level):
             new_bullets.append(bullet)
         self.bullets = new_bullets
 
-        self.boss_hp.change_val(-1)
+        # self.boss_hp.change_val(-1)
         if self.boss_hp.val <= 0:
             self.boss.start_dying()
 
@@ -1097,7 +1109,9 @@ class BossLevel(Level):
         self.timers['invincibility'].reset()
         self.timers['hit'].reset()
 
-        if self.player_hp == 0:
+        if self.player_hp <= 0:
+            pygame.Channel(0).stop()
+            pygame.mixer_music.fadeout(1000)
             self.game_over = True
             game_map = game.game_map
             game_map.level_index -= 2  # -2 cause the game map will do do +1, so the level would only go 1 back
