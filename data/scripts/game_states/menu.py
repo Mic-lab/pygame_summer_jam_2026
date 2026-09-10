@@ -3,7 +3,7 @@ from ..mgl import shader_handler
 from ..import utils
 from ..button import Button
 from ..font import fonts
-from ..import animation
+from ..animation import Animation
 from ..entity import Entity, PhysicsEntity
 from ..timer import Timer
 from ..particle import Particle, ParticleGenerator
@@ -17,16 +17,25 @@ class Menu(State):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        w = 150
         def get_rect(i):
-            return pygame.Rect(30, 30+i*30, 110, 20) 
+            return pygame.Rect(0.5*(config.GAME_SIZE[0]-w), 30+i*30, w, 20) 
+
         self.buttons = {
-            'game': Button(get_rect(3), 'Play', 'basic'),
-            'scale': Button(get_rect(4), f'Window Scale', 'basic'),
-            'fullscreen': Button(get_rect(5), f'Fullscreen', 'basic')
+            'game': Button(get_rect(5), 'Play', 'basic'),
+            'scale': Button(get_rect(6), f'Window Scale', 'basic'),
+            'fullscreen': Button(get_rect(7), f'Fullscreen', 'basic')
         }
+
+        pygame.mixer_music.set_volume(0.2)
+        sfx.play_music('menu_ambience.wav', loops=-1)
 
     def sub_update(self):
         self.game_surf.fill(colors.BLACK)
+        self.game_surf.blit(
+                Animation.img_db['title'],
+                (0.5*(config.GAME_SIZE[0]-Animation.img_db['title'].get_width()), 40)
+                )
 
         # Update Buttons
         for key, btn in self.buttons.items():
@@ -36,12 +45,7 @@ class Menu(State):
             if btn.clicked:
                 if key == 'game':
                     self.handler.transition_to(self.handler.states.Game)
-                elif key == 'music 1':
-                    sfx.play_music('song_1.wav', -1)
-                elif key == 'music 2':
-                    sfx.play_music('song_2.wav')
-                elif key == 'stop':
-                    pygame.mixer.music.fadeout(1000)
+                    pygame.mixer.music.fadeout(500)
                 elif key == 'scale':
                     config.scale = (config.scale + 1) % 5
                     if config.scale == 0: config.scale = 1

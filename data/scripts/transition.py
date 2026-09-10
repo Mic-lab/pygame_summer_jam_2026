@@ -8,7 +8,7 @@ class TransitionState(IntEnum):
 
 class Transition:
 
-    DURATION = 30
+    DURATION = 60
     
     def __init__(self):
         self.timer = Timer(Transition.DURATION)

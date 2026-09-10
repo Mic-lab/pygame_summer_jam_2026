@@ -46,7 +46,7 @@ class GameMap:
     def __init__(self):
         self.level_index = 0
         self.transition_timer = Timer(20, done=True)
-        pygame.mixer_music.set_volume(0.4)
+        pygame.mixer_music.set_volume(0.3)
         sfx.play_music('song.wav', loops=-1)
 
     def load_level(self, level_name):
