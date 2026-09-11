@@ -754,7 +754,8 @@ class Boss(Entity):
 
     def update(self, level):
         if self.dead: return
-        super().update()
+        if not (self.state.get('dying') and self.state_timer.ratio < 0.7):
+            super().update()
 
         initial_first_state_frame = self.first_state_frame
 
@@ -771,31 +772,32 @@ class Boss(Entity):
                 self.row_attack(level, attack)
 
         elif self.state.get('dying'):
-            if self.state_timer.ratio < 0.7:
-                if self.state_timer.frame % 5 == 0:
-                    v = pygame.Vector2(random.randint(0, 30)).rotate(random.randint(0, 359))
-                    explosion = Entity((0,0), 'boss_boom', action='idle')
-                    explosion.real_pos = self.rect.center + v - 0.5*Vec2(explosion.rect.size)
-                    self.explosions.append(explosion)
-                    sfx.sounds['small_boom.wav'].play()
-            elif self.state_timer.done:
-                did_big_boom = self.state.get('did_big_boom')
-                pygame.mixer_music.fadeout(1000)
-                if not did_big_boom:
-                    sfx.sounds['boom.wav'].set_volume(1)
-                    sfx.sounds['boom.wav'].play()
-                    self.state['did_big_boom'] = True
-                    level.shake_screen(5)
-                    for i in range(6):
-                        v = pygame.Vector2(random.randint(0, 30)).rotate(random.randint(0, 359))
-                        explosion = Entity((0,0), 'boss_boom', action='idle')
-                        explosion.real_pos = self.rect.center + v - 0.5*Vec2(explosion.rect.size)
-                        self.explosions.append(explosion)
+            if self.state_timer.ratio > 0.7:
+                self.animation.set_action("fleeing")
+                self.real_pos.y -= 20
+            else:
+                level.shake_screen(4)
+            #     if self.state_timer.frame % 5 == 0:
+            #         v = pygame.Vector2(random.randint(0, 30)).rotate(random.randint(0, 359))
+            #         explosion = Entity((0,0), 'boss_boom', action='idle')
+            #         explosion.real_pos = self.rect.center + v - 0.5*Vec2(explosion.rect.size)
+            #         self.explosions.append(explosion)
+            #         sfx.sounds['small_boom.wav'].play()
+            # if self.state_timer.done:
+            #     did_big_boom = self.state.get('did_big_boom')
+            #     pygame.mixer_music.fadeout(1000)
+            #     if not did_big_boom:
+            #         sfx.sounds['boom.wav'].set_volume(1)
+            #         sfx.sounds['boom.wav'].play()
+            #         self.state['did_big_boom'] = True
+            #         level.shake_screen(5)
+            #         for i in range(6):
+            #             v = pygame.Vector2(random.randint(0, 30)).rotate(random.randint(0, 359))
+            #             explosion = Entity((0,0), 'boss_boom', action='idle')
+            #             explosion.real_pos = self.rect.center + v - 0.5*Vec2(explosion.rect.size)
+            #             self.explosions.append(explosion)
 
-            if not self.state_timer.done:
-                level.shake_screen(0.5)
-
-            self.dead = self.state_timer.done and not self.explosions
+            self.dead = self.state_timer.done
             
         elif attack_direction := self.state.get('attack'):
             attack_data = self.ATTACKS[attack_direction]
@@ -810,7 +812,7 @@ class Boss(Entity):
                         elif a[0] == b[0]:
                             warning_pos_a = self.grid_to_px((a[0], a[1]-1), level, center=False)
                             warning_pos_b = self.grid_to_px((b[0], b[1]+1), level, center=False)
-                        else: raise ValueError('Bean that isnt vertical or horizontal detected')
+                        else: raise ValueError('Beam that isnt vertical or horizontal detected')
                         self.warnings.append(Entity(warning_pos_a, 'attack_warning', action='idle'))
                         self.warnings.append(Entity(warning_pos_b, 'attack_warning', action='idle'))
 
@@ -862,8 +864,7 @@ class Boss(Entity):
         shader_handler.vars['beamCoords'] = self.beam_coords
 
         
-        if 'did_big_boom' not in self.state:
-            super().render(surf, **kwargs)
+        super().render(surf, **kwargs)
 
         for explosion in self.explosions:
             explosion.render(surf)
@@ -1048,7 +1049,7 @@ class BossLevel(Level):
             new_bullets.append(bullet)
         self.bullets = new_bullets
 
-        # self.boss_hp.change_val(-1)
+        self.boss_hp.change_val(-1)
         if self.boss_hp.val <= 0:
             self.boss.start_dying()
 
