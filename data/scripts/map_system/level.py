@@ -156,7 +156,7 @@ class Level:
             "+": lambda x, y: tiles.Tile((x, y), 'statue', action='idle'),
             }
 
-    FG_TILES = ('s', 'z')
+    FG_TILES = ('s', 'z', '+')
 
     def __init__(self, level_name):
         self.level_name = level_name
