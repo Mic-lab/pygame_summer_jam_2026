@@ -232,7 +232,13 @@ class Level:
         self.allow_restart = True
         self._screen_shake = 0
 
-        self.verlet_points = [VerletPoint(25, i * 5) for i in range(10)]
+        if self.level_name in ('tutorial_0', 'boss'):
+            o = -1
+            self.update_guy = False
+        else:
+            o = 1
+            self.update_guy = True
+        self.verlet_points = [VerletPoint(25, i * 5 * o) for i in range(10)]
         self.constraints = [Constraint(self.verlet_points[0], None, "pin", {"pin":(25, 0)})]
         for i in range(len(self.verlet_points) - 1):
             self.constraints.append(Constraint(self.verlet_points[i], self.verlet_points[i + 1], "distance", {"distance":5}))
@@ -241,8 +247,11 @@ class Level:
         self.guy = Entity(self.GUY_POS, 'guy', action='idle')
         self.start_timer = Timer(1000)
         self.dialogue_timer = Timer(1)
+        self.show_dialogue_timer = Timer(180)
         self.dialogue_played = None
         self.dialogue_played_max = None
+
+        self.previous_mouse_pos = None
 
     def commence_win(self):
         if self.level_name == 'end': return
@@ -363,18 +372,19 @@ class Level:
             self.added_surf = True
 
         if self.pressed_pressure_plate and self.level_name == 'tutorial_0' and not self.added_surf:
-            # img = fonts['basic'].get_surf(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
-            # self.add_surf(img, (0, 40), center_x=True)
-            self.add_dialogue(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
-            self.added_surf = True
+            self.show_dialogue_timer.update()
+            if self.show_dialogue_timer.done:
+                self.add_dialogue(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
+                self.added_surf = True
+            if self.update_guy == False:
+                self.verlet_points[-1].x += 2
+                self.verlet_points[-1].px -= 2
+                self.update_guy = True
 
         if self.level_name == 'end':
 
             if self.start_timer.frame > 50:
-                end = config.GAME_SIZE[0]*0.5 - 0.5*(self.guy.rect.w)
-
                 self.constraints[0].data["pin"] = (lerp(25, config.GAME_SIZE[0]*0.5 - 0.5*(self.guy.rect.w), ease_in_out_cubic(min((self.start_timer.frame-50)/120, 1))), 0)
-                # self.guy.real_pos[0] +=   0.04*()
 
             if not self.added_surf and self.start_timer.frame > 250:
                 self.add_dialogue('Thanks for playing!', pos=(config.GAME_SIZE[0]*0.5+10, 50))
@@ -390,15 +400,20 @@ class Level:
 
         ParticleGenerator.update_generators(self.particle_gens)
 
-        for point in self.verlet_points:
-            point.update()
-        for constraint in self.constraints:
-            constraint.update()
-        point = self.verlet_points[-1]
-        mouse_pos = game.inputs.get('game_mouse_pos')
-        if (dist := math.dist((point.x, point.y), mouse_pos)) < 20:
-            point.ax = math.atan2(point.y - mouse_pos[1], point.x - mouse_pos[0]) * (1 - (dist / 20))
-            point.ay = math.atan2(point.y - mouse_pos[1], point.x - mouse_pos[0]) * (1 - (dist / 20))
+        if self.update_guy:
+            for point in self.verlet_points:
+                point.update()
+            for constraint in self.constraints:
+                constraint.update()
+            point = self.verlet_points[-1]
+            mouse_pos = game.inputs.get('game_mouse_pos')
+            if self.previous_mouse_pos != None:
+                dx = mouse_pos[0] - self.previous_mouse_pos[0]
+                dy = mouse_pos[1] - self.previous_mouse_pos[1]
+                if (dist := math.dist((point.x, point.y), mouse_pos)) < 20:
+                    point.x += dx * (1 - (dist / 20))
+                    point.y += dy * (1 - (dist / 20))
+            self.previous_mouse_pos = tuple(mouse_pos)
         self.guy.real_pos.xy = (self.verlet_points[-1].x, self.verlet_points[-1].y)
         self.guy.update()
 
