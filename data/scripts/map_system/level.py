@@ -414,6 +414,9 @@ class Level:
                     point.x += dx * (1 - (dist / 20))
                     point.y += dy * (1 - (dist / 20))
             self.previous_mouse_pos = tuple(mouse_pos)
+            if self.player_moved:
+                point.x += random.randint(-1, 1)
+                point.y += random.randint(-1, 1)
         self.guy.real_pos.xy = (self.verlet_points[-1].x, self.verlet_points[-1].y)
         self.guy.update()
 
@@ -1119,7 +1122,6 @@ class BossLevel(Level):
             new_bullets.append(bullet)
         self.bullets = new_bullets
 
-        self.boss_hp.change_val(-1)
         if self.boss_hp.val <= 0:
             self.boss.start_dying()
 
