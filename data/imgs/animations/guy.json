@@ -1,32 +1,41 @@
 { "frames": [
    {
     "filename": "idle",
-    "frame": { "x": 0, "y": 0, "w": 15, "h": 262 },
+    "frame": { "x": 0, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 45, "y": 0, "w": 15, "h": 262 },
-    "sourceSize": { "w": 106, "h": 297 },
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
+    "sourceSize": { "w": 24, "h": 24 },
     "duration": 100
    },
    {
     "filename": "talking",
-    "frame": { "x": 15, "y": 0, "w": 15, "h": 262 },
+    "frame": { "x": 24, "y": 0, "w": 24, "h": 24 },
     "rotated": false,
-    "trimmed": true,
-    "spriteSourceSize": { "x": 45, "y": 0, "w": 15, "h": 262 },
-    "sourceSize": { "w": 106, "h": 297 },
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 24, "h": 24 },
+    "sourceSize": { "w": 24, "h": 24 },
     "duration": 100
    }
  ],
  "meta": {
-  "app": "http://www.aseprite.org/",
-  "version": "1.x-dev",
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.18.3-dev",
   "image": "guy.png",
   "format": "RGBA8888",
-  "size": { "w": 30, "h": 262 },
+  "size": { "w": 48, "h": 24 },
   "scale": "1",
+  "frameTags": [
+   { "name": "idle", "from": 0, "to": 0, "direction": "forward", "color": "#000000ff" },
+   { "name": "talking", "from": 1, "to": 1, "direction": "forward", "color": "#000000ff" }
+  ],
+  "layers": [
+   { "name": "Layer 2", "opacity": 255, "blendMode": "normal" },
+   { "name": "Layer 4", "opacity": 255, "blendMode": "normal" },
+   { "name": "Layer 6", "opacity": 255, "blendMode": "normal" }
+  ],
   "slices": [
-   { "name": "rect", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 41, "y": 239, "w": 24, "h": 24 } }] }
+   { "name": "rect", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 0, "w": 24, "h": 24 } }] }
   ]
  }
 }

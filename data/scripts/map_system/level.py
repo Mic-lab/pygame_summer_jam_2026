@@ -1,4 +1,5 @@
 import pygame
+import math
 from pathlib import Path
 from pygame import Vector2 as Vec2
 from . import tiles
@@ -141,6 +142,54 @@ def parse_level_data(data_file_contents:str):
         parsed_data[tuple(map(int, target_tile.split(",")))] = LEVEL_DATA_PARSER_DISPATCH[data_type](data)
     return parsed_data
 
+class VerletPoint:
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+        self.px, self.py = x, y
+        self.ax, self.ay = 0, 0
+
+    def update(self):
+        vx = self.x - self.px
+        vy = self.y - self.py
+
+        self.px, self.py = self.x, self.y
+
+        self.x += vx * 0.99 + self.ax
+        self.y += vy * 0.99 + self.ay
+
+        self.ax, self.ay = 0, 0.1
+
+def resolve_distance(point_1, point_2, target_distance):
+    dx = point_2.x - point_1.x
+    dy = point_2.y - point_1.y
+    
+    dist = max(math.hypot(dx, dy), 0.0000000000000000000000001)
+    ux = dx / dist
+    uy = dy / dist
+    difference = dist - target_distance
+
+    offset_x = ux * difference * 0.5
+    offset_y = uy * difference * 0.5
+
+    point_1.x += offset_x
+    point_1.y += offset_y
+
+    point_2.x -= offset_x
+    point_2.y -= offset_y
+
+class Constraint:
+    def __init__(self, point_1, point_2, type, data):
+        self.point_1 = point_1
+        self.point_2 = point_2
+        self.type = type
+        self.data = data
+
+    def update(self):
+        if self.type == "pin":
+            self.point_1.x, self.point_1.y = self.data["pin"]
+        elif self.type == "distance":
+            resolve_distance(self.point_1, self.point_2, self.data["distance"])
+
 class Level:
     TILE_MAP = {
             '.': lambda x, y: tiles.RotatedTile((x, y), 'tile_00', collides=False),
@@ -183,6 +232,11 @@ class Level:
         self.allow_restart = True
         self._screen_shake = 0
 
+        self.verlet_points = [VerletPoint(25, i * 5) for i in range(10)]
+        self.constraints = [Constraint(self.verlet_points[0], None, "pin", {"pin":(25, 0)})]
+        for i in range(len(self.verlet_points) - 1):
+            self.constraints.append(Constraint(self.verlet_points[i], self.verlet_points[i + 1], "distance", {"distance":5}))
+        
         self.GUY_POS = (25, 53)
         self.guy = Entity(self.GUY_POS, 'guy', action='idle')
         self.start_timer = Timer(1000)
@@ -319,7 +373,7 @@ class Level:
             if self.start_timer.frame > 50:
                 end = config.GAME_SIZE[0]*0.5 - 0.5*(self.guy.rect.w)
 
-                self.guy.real_pos[0] = lerp(self.GUY_POS[0], end, ease_in_out_cubic(min((self.start_timer.frame-50)/120, 1)))
+                self.constraints[0].data["pin"] = (lerp(25, config.GAME_SIZE[0]*0.5 - 0.5*(self.guy.rect.w), ease_in_out_cubic(min((self.start_timer.frame-50)/120, 1))), 0)
                 # self.guy.real_pos[0] +=   0.04*()
 
             if not self.added_surf and self.start_timer.frame > 250:
@@ -336,6 +390,16 @@ class Level:
 
         ParticleGenerator.update_generators(self.particle_gens)
 
+        for point in self.verlet_points:
+            point.update()
+        for constraint in self.constraints:
+            constraint.update()
+        point = self.verlet_points[-1]
+        mouse_pos = game.inputs.get('game_mouse_pos')
+        if (dist := math.dist((point.x, point.y), mouse_pos)) < 20:
+            point.ax = math.atan2(point.y - mouse_pos[1], point.x - mouse_pos[0]) * (1 - (dist / 20))
+            point.ay = math.atan2(point.y - mouse_pos[1], point.x - mouse_pos[0]) * (1 - (dist / 20))
+        self.guy.real_pos.xy = (self.verlet_points[-1].x, self.verlet_points[-1].y)
         self.guy.update()
 
         if self.dialogue_played_max is not None:
@@ -478,10 +542,6 @@ class Level:
                 self.fg_tiles[place_pos] = placed_tile
         self.fg_place_requests = {}
 
-
-                
-
-
     def load_level(self, level_name):
         bg_tiles = {}
         fg_tiles = {}
@@ -579,9 +639,8 @@ class Level:
         for gen in self.particle_gens:
             gen.render(surf, offset=final_offset)
 
-        # self.guy.render(surf, offset=v)
-        guy_offset = -Vec2(self.guy.animation.rect.topleft)
-        self.guy.render(surf, offset=guy_offset)
+        pygame.draw.lines(surf, (99, 7, 100), False, [(p.x, p.y) for p in self.verlet_points], 1)
+        self.guy.render(surf, offset=(-12, 0))
 
         for surf_data in self.surfs:
             looped_surf, pos, alpha, speed = surf_data
@@ -604,13 +663,9 @@ class Level:
         else:
             shader_handler.vars['caTimer'] = 1-self.win_timer.ratio
 
-
-
 # Boss stuff ---------------------------------------------------------------- #
 
 class Boss(Entity):
-
-
 
     def __init__(self, pos, name, action=None):
         super().__init__(pos, name, action)
