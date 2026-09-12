@@ -384,7 +384,7 @@ class Level:
 
         if self.level_name == 'tutorial_3' and not self.added_dialogue_surf:
             if self.restarted:
-                self.add_dialogue(f'And then they EXPLODE')
+                self.add_dialogue(f'get rekt lol')
             else:
                 self.add_dialogue(f'You only need to trigger the pressure plates with X\'s on them once.')
 
