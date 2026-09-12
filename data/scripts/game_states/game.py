@@ -22,14 +22,14 @@ class GameMap:
             # 'bow_test',
 
             'tutorial_0',
-            'tutorial_0.5',
             'tutorial_1',
+            'tutorial_2',
             'level_0',
             'level_1',
             # 'level_2',
             'level_3',
 
-            'mine_0',
+            'tutorial_3',
             'mine_1',
             'mine_2',
 

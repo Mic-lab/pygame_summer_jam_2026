@@ -223,7 +223,7 @@ class Level:
         self.player_moved = False
         self.played_sounds = set()
 
-        self.added_surf = False
+        self.added_dialogue_surf = False
         self.pressed_pressure_plate = False
 
         self.win_timer = Timer(120, done=True)
@@ -250,8 +250,11 @@ class Level:
         self.show_dialogue_timer = Timer(180)
         self.dialogue_played = None
         self.dialogue_played_max = None
+        self.dialogue_surf = None
 
         self.previous_mouse_pos = None
+
+        self.restarted = False
 
     def commence_win(self):
         if self.level_name == 'end': return
@@ -316,11 +319,13 @@ class Level:
 
     def add_dialogue(self, text,pos=(70, 50)):
         img = fonts['basic'].get_surf(text)
+        self.dialogue_surf = img
         self.add_surf(img, pos, speed=3)
 
         self.dialogue_timer.reset()
         self.dialogue_played = 0
         self.dialogue_played_max = len(text.split())
+        self.added_dialogue_surf = True
 
     def get_player_tiles(self):
         # NOTE: Can be optimized
@@ -359,36 +364,38 @@ class Level:
 
         # Handle dialogue ---------------------- #
         start_dialogues = {
-                'tutorial_1': 'This\'ll be a bit difficult...',
+                'tutorial_2': 'This\'ll be a bit difficult...',
                 'level_0': 'Hold [r] to restart',
                 'level_3': 'Good luck!',
                 'pre_boss': 'Remember, hold [shift] to move quickly.\nThis may be important soon...',
                 }
         
-        if self.level_name in start_dialogues and not self.added_surf and self.start_timer.frame > 30:
-            # img = fonts['basic'].get_surf(start_dialogues[self.level_name])
-            # self.add_surf(img, (0, 40), center_x=True)
+        if self.level_name in start_dialogues and not self.added_dialogue_surf and self.start_timer.frame > 30:
             self.add_dialogue(start_dialogues[self.level_name])
-            self.added_surf = True
 
-        if self.pressed_pressure_plate and self.level_name == 'tutorial_0' and not self.added_surf:
+        if self.pressed_pressure_plate and self.level_name == 'tutorial_0' and not self.added_dialogue_surf:
             self.show_dialogue_timer.update()
             if self.show_dialogue_timer.done:
                 self.add_dialogue(f'You\'re too light to push the pressure plate.\nIf only there was a way to combine the weight of two slimes onto one tile...')
-                self.added_surf = True
             if self.update_guy == False:
                 self.verlet_points[-1].x += 2
                 self.verlet_points[-1].px -= 2
                 self.update_guy = True
+
+        if self.level_name == 'tutorial_3' and not self.added_dialogue_surf:
+            if self.restarted:
+                self.add_dialogue(f'And then they EXPLODE')
+            else:
+                self.add_dialogue(f'You only need to trigger the pressure plates with X\'s on them once.')
 
         if self.level_name == 'end':
 
             if self.start_timer.frame > 50:
                 self.constraints[0].data["pin"] = (lerp(25, config.GAME_SIZE[0]*0.5 - 0.5*(self.guy.rect.w), ease_in_out_cubic(min((self.start_timer.frame-50)/120, 1))), 0)
 
-            if not self.added_surf and self.start_timer.frame > 250:
+            if not self.added_dialogue_surf and self.start_timer.frame > 250:
                 self.add_dialogue('Thanks for playing!', pos=(config.GAME_SIZE[0]*0.5+10, 50))
-                self.added_surf = True
+                self.added_dialogue_surf = True
                 self.win_timer.reset()
                 pygame.mixer_music.set_volume(0.8)
                 sfx.play_music('end_song.wav', loops=-1)
@@ -453,12 +460,22 @@ class Level:
             self.restart_timer.frame -= 1
         if self.restart_timer.ratio == 1:
             # self.restart_timer.reset()
+            self.restarted = True
             self.restart()
 
     def restart(self):
         self.play_sound('restart.wav')
         self.bg_tiles, self.fg_tiles, self.level_size = self.load_level(self.level_name)
         self.allow_restart = False
+        remove = False
+        for i, surf_data in enumerate(self.surfs):
+            if surf_data[0] is self.dialogue_surf:
+                remove = True
+                break
+        if remove:
+            self.surfs.pop(i)
+        self.dialogue_surf = None
+        self.added_dialogue_surf = False
 
     def _resolve_movement_request(self, current_pos, desired_pos, visited):
         """
