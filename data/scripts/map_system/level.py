@@ -317,7 +317,7 @@ class Level:
         if center_x: pos[0] = 0.5*config.GAME_SIZE[0]-surf.get_width()*0.5
         self.surfs.append([surf, pos, 0, speed])
 
-    def add_dialogue(self, text,pos=(70, 50)):
+    def add_dialogue(self, text,pos=(55, 40)):
         img = fonts['basic'].get_surf(text)
         self.dialogue_surf = img
         self.add_surf(img, pos, speed=3)
@@ -365,13 +365,23 @@ class Level:
         # Handle dialogue ---------------------- #
         start_dialogues = {
                 'tutorial_2': 'This\'ll be a bit difficult...',
+                'tutorial_3': (f'You only need to trigger the pressure plates with X\'s on them once.',
+                               'get rekt lol'),
                 'level_0': 'Hold [r] to restart',
                 'level_3': 'Good luck!',
+                'bow_0': ('Eistein said that time is relative. That\'s why arrows only move when you move', 'Hmm, it might help to use the walls to stall...'),
                 'pre_boss': 'Remember, hold [shift] to move quickly.\nThis may be important soon...',
                 }
         
         if self.level_name in start_dialogues and not self.added_dialogue_surf and self.start_timer.frame > 30:
-            self.add_dialogue(start_dialogues[self.level_name])
+            dialogue = start_dialogues[self.level_name]
+            if isinstance(dialogue, tuple):
+                if self.restarted:
+                    self.add_dialogue(dialogue[1])
+                else:
+                    self.add_dialogue(dialogue[0])
+            else:
+                self.add_dialogue(dialogue)
 
         if self.pressed_pressure_plate and self.level_name == 'tutorial_0' and not self.added_dialogue_surf:
             self.show_dialogue_timer.update()
@@ -381,12 +391,6 @@ class Level:
                 self.verlet_points[-1].x += 2
                 self.verlet_points[-1].px -= 2
                 self.update_guy = True
-
-        if self.level_name == 'tutorial_3' and not self.added_dialogue_surf:
-            if self.restarted:
-                self.add_dialogue(f'get rekt lol')
-            else:
-                self.add_dialogue(f'You only need to trigger the pressure plates with X\'s on them once.')
 
         if self.level_name == 'end':
 
@@ -626,7 +630,12 @@ class Level:
                     elif c == "=":
                         bg_tiles[(x, y)] = map_cable_tiles(x, y, level)
                     elif c == "b":
-                        fg_tiles[(x, y)] = tiles.Bow((x, y), "dispenser_tile", level_data[(x, y)])
+                        if (x, y) in level_data:
+                            data = level_data[(x, y)]
+                        else:
+                            print(f'WARNING: Bow not found for {(x, y)}')
+                            data = Vec2(0, 1)
+                        fg_tiles[(x, y)] = tiles.Bow((x, y), "dispenser_tile", data)
                         solid_tiles.append((x, y))
                     elif c == "^":
                         data = level_data.get((x, y), {"state":"up", "triggers":[]})

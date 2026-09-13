@@ -225,7 +225,7 @@ class Slime(Tile):
     def on_removal(self, level):
         super().on_removal(level)
 
-        level.play_sound('boss_hit.wav')
+        level.play_sound('hit.wav')
 
         gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
         level.particle_gens.append(gen)
@@ -312,6 +312,9 @@ class Spikes(Tile):
 
     def on_fg_place_collision(self, level, blocking_tile):
         # When a slime stops the spike from rising up
+
+        level.play_sound('hit.wav')
+
         gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'smoke')
         level.particle_gens.append(gen)
         gen = ParticleGenerator.from_template(TILE_SIZE[0]*Vec2(self.grid_pos)+0.5*Vec2(TILE_SIZE), 'slime')
