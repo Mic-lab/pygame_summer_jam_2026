@@ -955,7 +955,8 @@ class Boss(Entity):
         if 'dying' not in self.state:
             pygame.Channel(0).fadeout(100)
             self.set_state({'dying': True}, duration=120)
-            pygame.mixer_music.fadeout(100)
+            sfx.sounds['boss_defeat.wav'].play()
+            pygame.mixer_music.fadeout(200)
 
     def render(self, surf, **kwargs):
         if self.dead: return
@@ -1011,6 +1012,10 @@ class Bullet:
     VEL_CHANGE = 1
     VEL_CAP = 5
 
+    img = pygame.Surface((5, 5))
+    img.set_colorkey((0,0,0))
+    pygame.draw.circle(img, colors.RED, (3,3), 2)
+
     def __init__(self, pos, target, level) -> None:
         self.pos = Vec2(pos)
         self.target = target
@@ -1018,6 +1023,7 @@ class Bullet:
 
         self.vel = self.get_dist_vec()
         self.vel.scale_to_length(self.INITIAL_VEL)
+
 
     def get_dist_vec(self):
         return (self.target.rect.center - self.pos - self.level.offset)
@@ -1040,12 +1046,12 @@ class Bullet:
 
         return output
 
-    # tmp
-    @property
-    def img(self):
-        s = pygame.Surface((4, 4))
-        s.fill((0, 200, 200))
-        return s
+    # # tmp
+    # @property
+    # def img(self):
+    #     s = pygame.Surface((4, 4))
+    #     s.fill((0, 200, 200))
+    #     return s
 
     def render(self, surf, offset):
         surf.blit(self.img, self.pos+offset)
