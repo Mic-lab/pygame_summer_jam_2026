@@ -74,7 +74,10 @@ class GameMap:
 
     def update(self, game):
         if self.transition_timer.done:
-            if game.inputs['pressed'].get('return'):
+            skip = False
+            if hasattr(self.level, 'skip'):
+                skip = self.level.skip
+            if game.inputs['pressed'].get('return') or skip:
                 sfx.sounds['transition.wav'].play()
                 self.transition_timer.duration = 20
                 self.transition_timer.reset()

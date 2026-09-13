@@ -258,6 +258,14 @@ class Level:
         self.previous_mouse_pos = None
 
         self.restarted = False
+        self.restarts = 0
+
+        self.showed_skip_dialogue = False
+
+        self.allow_skip_timer = Timer(1 * 60 * 60)
+        self.skip_timer = Timer(30)
+        self.skipping = False
+        self.skip = False
 
     def commence_win(self):
         if self.level_name == 'end': return
@@ -369,8 +377,8 @@ class Level:
         start_dialogues = {
                 'tutorial_2': 'This\'ll be a bit difficult...',
                 'tutorial_3': (f'You only need to trigger the pressure plates with X\'s on them once.',
-                               'get rekt lol'),
-                'level_0': 'Hold [r] to restart',
+                               'I technically didn\'t lie you know...'),
+                'level_0': 'You can hold [r] to restart if you mess up :)',
                 'level_3': 'Good luck!',
                 'bow_0': ('Einstein said that time is relative. That\'s why arrows only move when you move', 'Hmm, it might help to use the walls to stall...'),
                 'boss_prep_0': 'By the way, use WASD or arrows keys to move.',
@@ -468,14 +476,32 @@ class Level:
         elif self.restart_timer.frame > 0:
             self.restart_timer.frame -= 1
         if self.restart_timer.ratio == 1:
-            # self.restart_timer.reset()
             self.restarted = True
             self.restart()
+
+        self.allow_skip_timer.update()
+        if (self.allow_skip_timer.done or self.restarts > 4) and self.update_guy and not self.showed_skip_dialogue:
+            self.showed_skip_dialogue = True
+            self.remove_dialogue()
+            self.add_dialogue('Stuck? You poor thing. You can hold [space] to skip you know...')
+
+        self.skipping = game.inputs['held'].get('space')
+        
+        if self.skipping:
+            if self.skip_timer.ratio < 1: self.skip_timer.frame += 1
+        elif self.skip_timer.frame > 0:
+            self.skip_timer.frame -= 1
+        if self.skip_timer.ratio == 1:
+            self.skip = True
 
     def restart(self):
         self.play_sound('restart.wav')
         self.bg_tiles, self.fg_tiles, self.level_size = self.load_level(self.level_name)
         self.allow_restart = False
+        self.restarts += 1
+        self.remove_dialogue()
+    
+    def remove_dialogue(self):
         remove = False
         for i, surf_data in enumerate(self.surfs):
             if surf_data[0] is self.dialogue_surf:
@@ -703,12 +729,12 @@ class Level:
             surf_data[2] += speed
             if surf_data[2] > 255: surf_data[2] = 255
             
-        shader_handler.vars['restartTimer'] = self.restart_timer.ratio
+        shader_handler.vars['restartTimer'] = max(self.restart_timer.ratio, self.skip_timer.ratio)
         shader_handler.vars['dmgBoostTimer'] = 0
         shader_handler.vars['hitTimer'] = 0
 
-        if self.restarting:
-            shader_handler.vars['caTimer'] = self.restart_timer.ratio*3
+        if self.restarting or self.skipping:
+            shader_handler.vars['caTimer'] = max(self.restart_timer.ratio*3, self.skip_timer.ratio * 3)
         else:
             shader_handler.vars['caTimer'] = 1-self.win_timer.ratio
 
