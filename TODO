@@ -14,3 +14,5 @@ QOL
 **make sure start level is 0
 **Make sure enter doesn't work when level isn't complete
     - Enter shouldn't crash at final level also
+** game title
+    - png and display.set_caption
