@@ -375,12 +375,15 @@ class Level:
 
         # Handle dialogue ---------------------- #
         start_dialogues = {
+                'tutorial_1': 'This looks easy',
                 'tutorial_2': 'This\'ll be a bit difficult...',
                 'tutorial_3': (f'You only need to trigger the pressure plates with X\'s on them once.',
                                'I technically didn\'t lie you know...'),
                 'level_0': 'You can hold [r] to restart if you mess up :)',
                 'level_3': 'Good luck!',
                 'bow_0': ('Einstein said that time is relative. That\'s why arrows only move when you move', 'Hmm, it might help to use the walls to stall...'),
+                'conveyor_0': ('Who would even use this? Too lazy to walk a single tile?'),
+                'conveyor_1': 'I didn\'t know arrows enjoy commutes....',
                 'boss_prep_0': 'By the way, use WASD or arrows keys to move.',
                 'boss_prep_1': 'Wait you already knew that? Impressive.\nBut did you know you can hold [shift] to move faster? \nSomething tells me this may be important soon...',
                 'pre_boss': ('What\'s with all the statues? Someone have an inferiority complex or something?', 'Congrats, you found the super secret dialogue B)'),
