@@ -952,14 +952,12 @@ class Boss(Entity):
 
             elif self.is_attacking:
                 if self.first_attack_frame:
-                    print('playing laser sound')
                     pygame.Channel(0).play(sfx.sounds['laser.wav'])
                     self.first_attack_frame = False
                 self.warnings = []
                 for a, b in attack_data['beams']:
                     self.show_beam(a, b, level)
             else:
-                print('stopping')
                 pygame.Channel(0).fadeout(100)
                 # sfx.sounds['laser.wav'].set_volume(0)
 

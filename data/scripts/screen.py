@@ -8,6 +8,6 @@ def create_screen():
     pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE)
     pygame.display.gl_set_attribute(pygame.GL_CONTEXT_FORWARD_COMPATIBLE_FLAG, True)
 
-    return pygame.display.set_mode(config.screen_size,  pygame.OPENGL | pygame.DOUBLEBUF)
-
-
+    screen = pygame.display.set_mode(config.screen_size,  pygame.OPENGL | pygame.DOUBLEBUF)
+    pygame.display.set_caption('Slime Swarm')
+    return screen
