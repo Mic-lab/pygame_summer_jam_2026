@@ -52,8 +52,8 @@ class GameMap:
             )
 
     def __init__(self):
-        self.level_index = 5
         self.level_index = 0
+        # self.level_index = 11
         self.transition_timer = Timer(20, done=True)
         pygame.mixer_music.set_volume(0.3)
         sfx.play_music('song.wav', loops=-1)
@@ -77,11 +77,12 @@ class GameMap:
             skip = False
             if hasattr(self.level, 'skip'):
                 skip = self.level.skip
-            if game.inputs['pressed'].get('return') or skip:
-                sfx.sounds['transition.wav'].play()
-                self.transition_timer.duration = 20
-                self.transition_timer.reset()
-                self.completed_transition = False
+            if (game.inputs['pressed'].get('return') and self.level.win) or skip:
+                if not self.level.level_name == 'end':
+                    sfx.sounds['transition.wav'].play()
+                    self.transition_timer.duration = 20
+                    self.transition_timer.reset()
+                    self.completed_transition = False
             self.level.update(game)
         else:
             if self.transition_timer.ratio >= 0.5 and not self.completed_transition:

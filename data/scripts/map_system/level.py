@@ -382,7 +382,7 @@ class Level:
                 'level_3': 'Good luck!',
                 'bow_0': ('Einstein said that time is relative. That\'s why arrows only move when you move', 'Hmm, it might help to use the walls to stall...'),
                 'boss_prep_0': 'By the way, use WASD or arrows keys to move.',
-                'boss_prep_1': 'Wait you already knew that? Impressive.\nBut did you know you can hold [shift] to move faster? \nSomething tell me this may be important soon...',
+                'boss_prep_1': 'Wait you already knew that? Impressive.\nBut did you know you can hold [shift] to move faster? \nSomething tells me this may be important soon...',
                 'pre_boss': ('What\'s with all the statues? Someone have an inferiority complex or something?', 'Congrats, you found the super secret dialogue B)'),
                 }
         
@@ -1121,7 +1121,7 @@ class BossLevel(Level):
         boss.real_pos.x = center_coord.x
 
         self.boss = boss
-        self.boss_hp = BossBar(100, 1200)
+        self.boss_hp = BossBar(1200, 1200)
         self.bullets = []
 
         self.attack_tiles = {}
