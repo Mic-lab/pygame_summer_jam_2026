@@ -38,6 +38,9 @@ class GameMap:
 
             'bow_0',
 
+            'boss_prep_0',
+            'boss_prep_1',
+
             'pre_boss',
             'boss',
             'end'
