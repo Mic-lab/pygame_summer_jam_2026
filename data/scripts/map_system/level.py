@@ -242,6 +242,9 @@ class Level:
         self.constraints = [Constraint(self.verlet_points[0], None, "pin", {"pin":(25, 0)})]
         for i in range(len(self.verlet_points) - 1):
             self.constraints.append(Constraint(self.verlet_points[i], self.verlet_points[i + 1], "distance", {"distance":5}))
+
+        if self.level_name == 'boss_prep_0':
+            pygame.mixer.music.fadeout(1000)
         
         self.GUY_POS = (25, 53)
         self.guy = Entity(self.GUY_POS, 'guy', action='idle')
@@ -372,7 +375,7 @@ class Level:
                 'bow_0': ('Einstein said that time is relative. That\'s why arrows only move when you move', 'Hmm, it might help to use the walls to stall...'),
                 'boss_prep_0': 'By the way, use WASD or arrows keys to move.',
                 'boss_prep_1': 'Wait you already knew that? Impressive.\nBut did you know you can hold [shift] to move faster? \nSomething tell me this may be important soon...',
-                'pre_boss': ('What\'s with all the statues? someone have an inferiority complex or something?', 'Congrats, you found the super secret dialogue B)'),
+                'pre_boss': ('What\'s with all the statues? Someone have an inferiority complex or something?', 'Congrats, you found the super secret dialogue B)'),
                 }
         
         if self.level_name in start_dialogues and not self.added_dialogue_surf and self.start_timer.frame > 30:

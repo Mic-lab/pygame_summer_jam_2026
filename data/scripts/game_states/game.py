@@ -29,14 +29,17 @@ class GameMap:
             # 'level_2',
             'level_3',
 
+            'bow_0',
+
+            'conveyor_0',
+            'conveyor_1',  # Includes bow
+
             'tutorial_3',
             'mine_1',
             'mine_2',
 
             'spikes_0',
             'wide_lava_level',
-
-            'bow_0',
 
             'boss_prep_0',
             'boss_prep_1',
@@ -49,8 +52,8 @@ class GameMap:
             )
 
     def __init__(self):
-        self.level_index = 11
-        # self.level_index = 0
+        self.level_index = 5
+        self.level_index = 0
         self.transition_timer = Timer(20, done=True)
         pygame.mixer_music.set_volume(0.3)
         sfx.play_music('song.wav', loops=-1)
