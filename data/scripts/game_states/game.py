@@ -33,6 +33,7 @@ class GameMap:
             'mine_1',
             'mine_2',
 
+            'spikes_0',
 
             'wide_lava_level',
 
