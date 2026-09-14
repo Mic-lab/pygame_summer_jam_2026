@@ -214,6 +214,9 @@ class Level:
         'mine_2': 'HINT: Once a heavy slime is inside, it may help to place the two light slimes on the mines.',
         }
 
+    UNSKIPPABLE_LEVELS = {"boss_prep_0", "boss_prep_1", "pre_boss", "boss"}
+    UNRESTARTABLE_LEVELS = {"boss"}
+
     def __init__(self, level_name):
         self.level_name = level_name
         self.bg_tiles, self.fg_tiles, self.level_size = self.load_level(level_name)
@@ -399,6 +402,7 @@ class Level:
                                'I technically didn\'t lie you know...'),
                 'tutorial_4': 'Spacing is everything.',
                 'level_0': 'Lava or other obstacles can be useful for repositioning your slimes.',
+                'level_1': 'This might be tricky...',
                 'level_3': ('Remember, you can hold [r] to restart if you get stuck.', 'I think we\'re gonna be here a while...'),
                 'bow_0': ('Einstein said that time is relative. That\'s why arrows only move when you move', 'Hmm, it might help to use the walls to stall...'),
                 'conveyor_0': ('Who would even use this? Too lazy to walk a single tile?'),
@@ -503,7 +507,7 @@ class Level:
             self.allow_restart = True
         self.restarting = game.inputs['held'].get('r') and self.allow_restart
 
-        if self.restarting:
+        if self.restarting and self.level_name not in self.UNRESTARTABLE_LEVELS:
             if self.restart_timer.ratio < 1: self.restart_timer.frame += 1
         elif self.restart_timer.frame > 0:
             self.restart_timer.frame -= 1
@@ -513,11 +517,11 @@ class Level:
 
         self.allow_skip_timer.update()
         self.hint_timer.update()
-        if (self.allow_skip_timer.done or self.restarts > 4) and self.update_guy and not self.showed_skip_dialogue:
+        if (self.allow_skip_timer.done or self.restarts > 4) and self.update_guy and not self.showed_skip_dialogue and self.level_name not in self.UNSKIPPABLE_LEVELS:
             self.showed_skip_dialogue = True
             self.remove_dialogue()
             if self.level_name == 'end':
-                self.add_dialogue('Stuck? You can hold [space] to skip y-Oh wait your done!')
+                self.add_dialogue('Stuck? You can hold [s - Oh wait your done!')
             else:
                 self.add_dialogue('Stuck? You can hold [space] to skip you know...')
         elif self.level_name in self.HINTS and self.hint_timer.done and self.update_guy and not self.showed_hint_dialogue:
@@ -527,8 +531,8 @@ class Level:
             self.add_dialogue(hint)
 
         self.skipping = game.inputs['held'].get('space')
-        
-        if self.skipping:
+
+        if self.skipping and self.level_name not in self.UNSKIPPABLE_LEVELS:
             if self.skip_timer.ratio < 1: self.skip_timer.frame += 1
         elif self.skip_timer.frame > 0:
             self.skip_timer.frame -= 1
