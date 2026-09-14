@@ -210,7 +210,7 @@ class Level:
 
     HINTS = {
         'tutorial_1': 'HINT: Bring both a slimes to the top right corner',
-        'level_3': 'HINT: Combine the middle slimes together LAST',
+        'level_3': 'HINT: When merging the slimes, me mindful of preserving the gap between them',
         'mine_2': 'HINT: Once a heavy slime is inside, it may help to place the two light slimes on the mines.',
         }
 
