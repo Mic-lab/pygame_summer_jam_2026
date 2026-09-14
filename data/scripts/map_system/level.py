@@ -438,7 +438,7 @@ class Level:
                 self.constraints[0].data["pin"] = (lerp(25, config.GAME_SIZE[0]*0.5 - 0.5*(self.guy.rect.w), ease_in_out_cubic(min((self.start_timer.frame-50)/120, 1))), 0)
 
             if not self.added_dialogue_surf and self.start_timer.frame > 250:
-                self.add_dialogue('Thanks for playing!!            [Escape] to quit', pos=(config.GAME_SIZE[0]*0.5+10, 50))
+                self.add_dialogue('Thanks for playing!!\nPress [Escape] to quit', pos=(config.GAME_SIZE[0]*0.5+10, 50))
                 self.added_dialogue_surf = True
                 self.win_timer.reset()
                 pygame.mixer_music.set_volume(0.8)
