@@ -255,5 +255,12 @@ void main() {
         // f_color.rb *= tTimer;
 
     }
+
+    // Scanlines
+    vec2 uvsScaled = floor(uvs*screenSize);
+    if (mod(uvsScaled.y, 2) == 0) {
+        f_color.rgb *= 0.9;
+    }
+
 }
 
