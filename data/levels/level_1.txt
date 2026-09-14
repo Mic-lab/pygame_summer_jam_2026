@@ -2,7 +2,7 @@
 0000000000000000000
 0wwwwwwwwwwwwwwwww0
 0wwp......wwwwwwww0
-0wwwwwwww.wwwwwwww0
+0wwwwwwww#wwwwwwww0
 0wwwwwwww.......ww0
 0wwwwwww...wwww.ww0
 0ww+w+ww.sswwwp.ww0

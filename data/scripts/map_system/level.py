@@ -396,7 +396,7 @@ class Level:
 
         # Handle dialogue ---------------------- #
         start_dialogues = {
-                'tutorial_1': 'This looks easy',
+                'tutorial_1': 'This looks easy :)',
                 'tutorial_2': 'This\'ll be a bit difficult...',
                 'tutorial_3': ('You only need to trigger the pressure plates with X\'s on them once.',
                                'I technically didn\'t lie you know...'),
@@ -408,6 +408,7 @@ class Level:
                 'conveyor_0': ('Who would even use this? Too lazy to walk a single tile?'),
                 'conveyor_1': 'I had to cross this to immigrate to the puppet world.',
                 'mine_1': 'Not all explosions are undesired...',
+                'mine_2': 'You know, I hope you\'re having fun :)',
                 'spikes_0': 'Some levels require sacrifices...',
                 'boss_prep_0': 'By the way, use WASD or arrows keys to move.',
                 'boss_prep_1': 'Wait you already knew that? Impressive.\nBut did you know you can hold [shift] to move faster? \nSomething tells me this may be important soon...',
