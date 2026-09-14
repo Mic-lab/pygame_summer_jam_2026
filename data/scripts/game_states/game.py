@@ -29,6 +29,7 @@ class GameMap:
             # 'level_2',
             'level_3',
 
+            'tutorial_4',
             'bow_0',
 
             'conveyor_0',

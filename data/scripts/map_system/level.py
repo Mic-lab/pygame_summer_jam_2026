@@ -395,8 +395,9 @@ class Level:
         start_dialogues = {
                 'tutorial_1': 'This looks easy',
                 'tutorial_2': 'This\'ll be a bit difficult...',
-                'tutorial_3': (f'You only need to trigger the pressure plates with X\'s on them once.',
+                'tutorial_3': ('You only need to trigger the pressure plates with X\'s on them once.',
                                'I technically didn\'t lie you know...'),
+                'tutorial_4': 'Spacing is everything.',
                 'level_0': 'Lava or other obstacles can be useful for repositioning your slimes.',
                 'level_3': ('Remember, you can hold [r] to restart if you get stuck.', 'I think we\'re gonna be here a while...'),
                 'bow_0': ('Einstein said that time is relative. That\'s why arrows only move when you move', 'Hmm, it might help to use the walls to stall...'),
