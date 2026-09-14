@@ -17,6 +17,7 @@ from ..entity import Entity
 from ..font import fonts
 from .. import colors
 import random
+import sys
 
 SOLID_TILES = {"0", "b"}
 
@@ -207,6 +208,12 @@ class Level:
 
     FG_TILES = ('s', 'z', '+')
 
+    HINTS = {
+        'tutorial_1': 'HINT: Bring both a slimes to the top right corner',
+        'level_3': 'HINT: Combine the middle slimes together LAST',
+        'mine_2': 'HINT: Once a heavy slime is inside, it may help to place the two light slimes on the mines.',
+        }
+
     def __init__(self, level_name):
         self.level_name = level_name
         self.bg_tiles, self.fg_tiles, self.level_size = self.load_level(level_name)
@@ -262,8 +269,19 @@ class Level:
 
         self.showed_skip_dialogue = False
 
-        self.allow_skip_timer = Timer(1 * 60 * 60)
+        self.allow_skip_timer = Timer(4 * 60 * 60)
         self.skip_timer = Timer(30)
+        self.showed_hint_dialogue = False
+        self.hint_timer = Timer(2*3600)
+
+
+        # # TMP
+        # self.allow_skip_timer = Timer(0.5 * 60 * 60)
+        # self.skip_timer = Timer(30)
+        # self.hint_timer = Timer(0.05*3600)
+
+
+
         self.skipping = False
         self.skip = False
 
@@ -379,14 +397,16 @@ class Level:
                 'tutorial_2': 'This\'ll be a bit difficult...',
                 'tutorial_3': (f'You only need to trigger the pressure plates with X\'s on them once.',
                                'I technically didn\'t lie you know...'),
-                'level_0': 'You can hold [r] to restart if you mess up :)',
-                'level_3': 'Good luck!',
+                'level_0': 'Lava or other obstacles can be useful for repositioning your slimes.',
+                'level_3': ('Remember, you can hold [r] to restart if you get stuck.', 'I think we\'re gonna be here a while...'),
                 'bow_0': ('Einstein said that time is relative. That\'s why arrows only move when you move', 'Hmm, it might help to use the walls to stall...'),
                 'conveyor_0': ('Who would even use this? Too lazy to walk a single tile?'),
-                'conveyor_1': 'I didn\'t know arrows enjoy commutes....',
+                'conveyor_1': 'I had to cross this to immigrate to the puppet world.',
+                'mine_1': 'Not all explosions are undesired...',
+                'spikes_0': 'Some levels require sacrifices...',
                 'boss_prep_0': 'By the way, use WASD or arrows keys to move.',
                 'boss_prep_1': 'Wait you already knew that? Impressive.\nBut did you know you can hold [shift] to move faster? \nSomething tells me this may be important soon...',
-                'pre_boss': ('What\'s with all the statues? Someone have an inferiority complex or something?', 'Congrats, you found the super secret dialogue B)'),
+                'pre_boss': 'What\'s with all the statues? Someone have an inferiority complex or something?',
                 }
         
         if self.level_name in start_dialogues and not self.added_dialogue_surf and self.start_timer.frame > 30:
@@ -397,7 +417,11 @@ class Level:
                 else:
                     self.add_dialogue(dialogue[0])
             else:
-                self.add_dialogue(dialogue)
+
+                if self.level_name == 'pre_boss' and game.game_map.boss_deaths > 0:
+                    self.add_dialogue('Don\'t forget that holding [shift] makes you run faster')
+                else:
+                    self.add_dialogue(dialogue)
 
         if self.pressed_pressure_plate and self.level_name == 'tutorial_0' and not self.added_dialogue_surf:
             self.show_dialogue_timer.update()
@@ -414,11 +438,15 @@ class Level:
                 self.constraints[0].data["pin"] = (lerp(25, config.GAME_SIZE[0]*0.5 - 0.5*(self.guy.rect.w), ease_in_out_cubic(min((self.start_timer.frame-50)/120, 1))), 0)
 
             if not self.added_dialogue_surf and self.start_timer.frame > 250:
-                self.add_dialogue('Thanks for playing!', pos=(config.GAME_SIZE[0]*0.5+10, 50))
+                self.add_dialogue('Thanks for playing!!            [Escape] to quit', pos=(config.GAME_SIZE[0]*0.5+10, 50))
                 self.added_dialogue_surf = True
                 self.win_timer.reset()
                 pygame.mixer_music.set_volume(0.8)
                 sfx.play_music('end_song.wav', loops=-1)
+
+            if game.inputs['pressed'].get('escape'):
+                pygame.quit()
+                sys.exit()
 
         # -------------------------------------- #
 
@@ -483,10 +511,19 @@ class Level:
             self.restart()
 
         self.allow_skip_timer.update()
+        self.hint_timer.update()
         if (self.allow_skip_timer.done or self.restarts > 4) and self.update_guy and not self.showed_skip_dialogue:
             self.showed_skip_dialogue = True
             self.remove_dialogue()
-            self.add_dialogue('Stuck? You poor thing. You can hold [space] to skip you know...')
+            if self.level_name == 'end':
+                self.add_dialogue('Stuck? You can hold [space] to skip y-Oh wait your done!')
+            else:
+                self.add_dialogue('Stuck? You can hold [space] to skip you know...')
+        elif self.level_name in self.HINTS and self.hint_timer.done and self.update_guy and not self.showed_hint_dialogue:
+            hint = self.HINTS[self.level_name]
+            self.showed_hint_dialogue = True
+            self.remove_dialogue()
+            self.add_dialogue(hint)
 
         self.skipping = game.inputs['held'].get('space')
         
@@ -836,7 +873,7 @@ class Boss(Entity):
         self.first_state_frame = True
 
     def row_attack(self, level, attack):
-        self.set_state({'attack': attack}, duration=6*60)
+        self.set_state({'attack': attack}, duration=7*60)
         # return
         # attacked_row = None
         # slime_positions = random.sample(list(level.fg_tiles.keys()), len(level.fg_tiles))
@@ -1257,6 +1294,7 @@ class BossLevel(Level):
             game_map.transition_timer.duration = 100
             game_map.transition_timer.reset()
             game_map.completed_transition = False
+            game_map.boss_deaths += 1
 
             
 

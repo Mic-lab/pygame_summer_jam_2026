@@ -22,8 +22,8 @@ class GameMap:
             # 'bow_test',
 
             'tutorial_0',
-            'tutorial_1',
             'tutorial_2',
+            'tutorial_1',
             'level_0',
             'level_1',
             # 'level_2',
@@ -53,10 +53,10 @@ class GameMap:
 
     def __init__(self):
         self.level_index = 0
-        # self.level_index = 11
         self.transition_timer = Timer(20, done=True)
         pygame.mixer_music.set_volume(0.3)
         sfx.play_music('song.wav', loops=-1)
+        self.boss_deaths = 0
 
     def load_level(self, level_name):
         if level_name == 'boss':
